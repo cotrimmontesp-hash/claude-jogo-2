@@ -1,4 +1,4 @@
-const CACHE = 'chef-arena-v1';
+const CACHE = 'chef-arena-v2';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/', '/jogo.html', '/manifest.webmanifest', '/icon-192.png'])));
   self.skipWaiting();
