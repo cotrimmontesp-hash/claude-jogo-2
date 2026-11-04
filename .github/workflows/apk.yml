@@ -38,6 +38,10 @@ jobs:
           npx cap init "Chef Arena" com.claude.chefarena --web-dir www
           npx cap add android
           npx cap sync android
+          # tela sempre deitada e em tela cheia
+          sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
+          grep -q sensorLandscape android/app/src/main/AndroidManifest.xml
+          sed -i 's#<style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">#&\n        <item name="android:windowFullscreen">true</item>#' android/app/src/main/res/values/styles.xml || true
       - name: Compilar APK
         run: |
           cd android && chmod +x gradlew && ./gradlew assembleDebug

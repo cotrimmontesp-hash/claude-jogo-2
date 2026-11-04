@@ -58,11 +58,36 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
 .seg button.on{background:var(--ink);color:var(--gold)}
 .tag{font-size:11px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px;margin-left:auto;cursor:pointer}
 .tag.t0{background:#e2402f}.tag.t1{background:#3a86ff}
+@media (orientation:landscape) and (max-height:560px){
+  .overlay{padding:8px 16px}
+  .card{max-width:min(720px,100%);padding:14px 18px 12px}
+  .card:before{height:18px}
+  h1{font-size:36px;margin:10px 0 2px}h2{font-size:26px;margin:8px 0 4px}
+  .sub{margin:0 0 8px;font-size:14px}
+  .btn{padding:9px 10px;margin:6px 0;font-size:18px}.btn small{font-size:11px}
+  .cols{display:flex;gap:10px;align-items:stretch}.cols>*{flex:1;min-width:0}
+  .cols>.btn{margin:6px 0}
+  .cols>.row{align-self:center}
+  .lob{align-items:flex-start;text-align:left}.lob h2,.lob .sub{text-align:center}
+  .how{margin-top:8px;padding:6px 10px;font-size:12px}
+  .seg{margin:4px 0 6px}.seg button{padding:5px 0;font-size:15px}
+  input.in{padding:8px;margin:6px 0;font-size:16px}
+  .rank{margin:6px 0;font-size:14px}.rank li{padding:3px 8px}
+  #end .rank{columns:2;column-gap:10px}#end .rank li{break-inside:avoid}
+  #msg{font-size:56px;top:24%}
+}
+#rotate{position:fixed;inset:0;z-index:50;background:#2a1b14;color:#fff6e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font-weight:800}
+#rotate .ph{font-size:64px;animation:rot 1.8s ease-in-out infinite}
+@keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+#rotate .btn{max-width:280px}
 .status{min-height:20px;font-weight:800;font-size:14px;color:var(--red2);margin:6px 0 0}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="rotate" class="hidden"><div class="ph">📱</div><div style="font-family:'Lilita One';font-size:28px">Gire o celular</div>
+  <div style="opacity:.8">O Chef Arena é jogado com a tela deitada.</div>
+  <button class="btn" id="btnRotate">Girar a tela</button></div>
 
 <div id="hud" class="hidden">
   <div class="pill" id="alive">👨‍🍳 8</div>
@@ -77,8 +102,8 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
   <div class="card">
     <h1>CHEF ARENA</h1>
     <p class="sub">Empurre os outros chefs para fora da frigideira. Quem ficar por último vence!</p>
-    <button class="btn" id="btnCpu">Jogar contra o computador<small>Você + 7 chefs, todos contra todos</small></button>
-    <button class="btn alt" id="btnOnline">Online com amigos<small>Até 8 chefs, cada um no seu celular</small></button>
+    <div class="cols"><button class="btn" id="btnCpu">Jogar contra o computador<small>Todos contra todos ou em times</small></button>
+    <button class="btn alt" id="btnOnline">Online com amigos<small>Até 8 chefs, cada um no seu celular</small></button></div>
     <div class="how"><b>Como jogar</b><br>📱 Arraste o dedo no lado esquerdo para andar e toque em <b>EMPURRAR</b> para dar um tranco.<br>⌨️ No computador: <b>WASD</b> ou setas para andar e <b>Espaço</b> para empurrar.<br>🔥 Depois de 30 segundos a frigideira começa a encolher!</div>
   </div>
 </div>
@@ -89,9 +114,9 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
     <div class="seg" id="cpuMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
     <p class="sub" id="cpuModeSub" style="margin:0 0 6px">Você + 7 chefs, todos contra todos</p>
     <h2 style="margin-top:6px">Escolha o nível</h2>
-    <button class="btn easy" data-d="easy">Fácil<small>Chefs distraídos e lentos</small></button>
+    <div class="cols"><button class="btn easy" data-d="easy">Fácil<small>Chefs distraídos e lentos</small></button>
     <button class="btn med" data-d="medium">Médio<small>Chefs espertos</small></button>
-    <button class="btn hard" data-d="hard">Difícil<small>Chefs rápidos e de olho em você</small></button>
+    <button class="btn hard" data-d="hard">Difícil<small>Rápidos e de olho em você</small></button></div>
     <button class="btn alt" id="btnBack">Voltar</button>
   </div>
 </div>
@@ -100,8 +125,8 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
   <div class="card">
     <h2>Jogar online</h2>
     <input class="in" id="nameIn" maxlength="10" placeholder="Seu nome" autocomplete="off">
-    <button class="btn" id="btnCreate">Criar sala<small>Você recebe um código para os amigos</small></button>
-    <div class="row"><input class="in" id="codeIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn med" id="btnJoin">Entrar</button></div>
+    <div class="cols"><button class="btn" id="btnCreate">Criar sala<small>Você recebe um código para os amigos</small></button>
+    <div class="row"><input class="in" id="codeIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn med" id="btnJoin">Entrar</button></div></div>
     <p class="status" id="netStatus"></p>
     <button class="btn alt" id="btnOnBack">Voltar</button>
   </div>
@@ -109,10 +134,12 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
 
 <div class="overlay hidden" id="lobby">
   <div class="card">
+    <div class="cols lob"><div>
     <h2>Sala <span class="code" id="lobbyCode">----</span></h2>
     <p class="sub" id="lobbySub">Passe o código para seus amigos entrarem.</p>
     <button class="btn alt" id="btnInvite">Convidar amigos<small>Envia o link da sala</small></button>
     <ol class="rank" id="lobbyList"></ol>
+    </div><div>
     <div id="hostCtl">
       <div class="seg" id="onMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
       <label class="lbl">Completar com bots
@@ -122,6 +149,7 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
     <p class="sub" id="lobbyWait">Aguardando o dono da sala começar…</p>
     <p class="status" id="lobbyStatus"></p>
     <button class="btn alt" id="btnLeave">Sair da sala</button>
+    </div></div>
   </div>
 </div>
 
@@ -797,6 +825,21 @@ $('pauseBtn').addEventListener('touchstart',e=>{e.stopPropagation();e.preventDef
 $('btnResume').onclick=togglePause;
 $('btnRestart').onclick=()=>startGame(diff);
 $('btnQuit').onclick=toMenu;
+
+/* ---------- Tela deitada ---------- */
+const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
+const TOPW=(()=>{try{return window.top.document?window.top:window}catch(e){return window}})();
+function goLandscape(){
+  const lock=()=>{try{const o=TOPW.screen.orientation;if(o&&o.lock)o.lock('landscape').catch(()=>{})}catch(e){}};
+  try{const d=TOPW.document.documentElement;
+    if(!TOPW.document.fullscreenElement&&d.requestFullscreen){d.requestFullscreen({navigationUI:'hide'}).then(lock,lock);return}}catch(e){}
+  lock();
+}
+function checkRotate(){$('rotate').classList.toggle('hidden',!(isTouch&&innerHeight>innerWidth))}
+addEventListener('resize',checkRotate);addEventListener('orientationchange',()=>setTimeout(checkRotate,200));checkRotate();
+$('btnRotate').onclick=goLandscape;
+let triedLand=false;
+addEventListener('pointerdown',()=>{if(!triedLand&&isTouch){triedLand=true;goLandscape()}},{capture:true});
 
 /* ---------- Loop ---------- */
 toMenu();
