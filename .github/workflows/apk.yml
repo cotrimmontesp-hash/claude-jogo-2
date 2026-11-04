@@ -41,6 +41,9 @@ jobs:
           # tela sempre deitada e em tela cheia
           sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
           grep -q sensorLandscape android/app/src/main/AndroidManifest.xml
+          # permissão para vibrar
+          grep -q android.permission.VIBRATE android/app/src/main/AndroidManifest.xml || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          grep -q android.permission.VIBRATE android/app/src/main/AndroidManifest.xml
           sed -i 's#<style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">#&\n        <item name="android:windowFullscreen">true</item>#' android/app/src/main/res/values/styles.xml || true
       - name: Compilar APK
         run: |

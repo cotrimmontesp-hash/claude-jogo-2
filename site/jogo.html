@@ -46,6 +46,22 @@ h2{font-family:"Lilita One",sans-serif;font-weight:400;font-size:34px;margin:16p
 #pushBtn span{font-size:32px;line-height:1}
 #pushBtn.press{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
 #pauseBtn{pointer-events:auto;cursor:pointer}
+#hudR{display:flex;gap:8px}#muteBtn{pointer-events:auto;cursor:pointer}
+#guardBtn{position:fixed;right:146px;bottom:calc(30px + env(safe-area-inset-bottom));width:86px;height:86px;border-radius:50%;border:4px solid var(--ink);z-index:5;
+  background:conic-gradient(#2ec4b6 calc(var(--g,1)*360deg),#5a7a78 0);box-shadow:0 5px 0 var(--ink);color:#fff;font-family:"Lilita One";font-size:13px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#guardBtn span{font-size:26px;line-height:1}
+#guardBtn.press{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+#emoBar{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:6}
+#emoBar button{width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);background:rgba(255,246,232,.95);font-size:22px;box-shadow:0 3px 0 var(--ink);cursor:pointer;padding:0}
+#emoBar button:active{transform:translateY(3px);box-shadow:none}
+.lbl3{font-family:"Lilita One";font-size:17px;margin:4px 0 0;color:var(--ink)}
+.coins{font-family:"Lilita One";font-size:20px;color:var(--ink)}
+.shop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.item{border:3px solid var(--ink);border-radius:12px;background:#fff;padding:6px 4px;cursor:pointer;font-weight:800;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.item .sw{width:38px;height:38px;border-radius:10px;border:3px solid var(--ink)}
+.item.on{background:var(--gold)}.item.lock{opacity:.85}
+.item b{font-family:"Lilita One";font-weight:400;font-size:14px}
+@media (orientation:landscape) and (max-height:560px){.shop{grid-template-columns:repeat(5,1fr)}.item .sw{width:30px;height:30px}#guardBtn{right:140px;width:78px;height:78px}}
 @media (hover:hover) and (pointer:fine){#joyHint{display:none}}
 .card{max-height:calc(100% - 8px);overflow-y:auto}
 input.in{display:block;width:100%;border:3px solid var(--ink);border-radius:12px;padding:12px;margin:8px 0;font:800 18px Nunito,sans-serif;text-align:center;
@@ -91,27 +107,31 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
 
 <div id="hud" class="hidden">
   <div class="pill" id="alive">👨‍🍳 8</div>
-  <div class="pill" id="pauseBtn">☰</div>
+  <div id="hudR"><div class="pill" id="muteBtn">🔊</div><div class="pill" id="pauseBtn">☰</div></div>
 </div>
 <div id="msg"></div>
 <div id="joyBase" class="hidden"><div id="joyKnob"></div></div>
 <div id="joyHint" class="hidden">Arraste aqui para andar</div>
 <div id="pushBtn" class="hidden"><span>🍳</span>EMPURRAR</div>
+<div id="guardBtn" class="hidden"><span>🛡️</span>SEGURAR</div>
+<div id="emoBar" class="hidden"><button data-e="0">😂</button><button data-e="1">🔥</button><button data-e="2">👋</button><button data-e="3">😎</button></div>
 
 <div class="overlay" id="menu">
   <div class="card">
     <h1>CHEF ARENA</h1>
     <p class="sub">Empurre os outros chefs para fora da frigideira. Quem ficar por último vence!</p>
     <div class="cols"><button class="btn" id="btnCpu">Jogar contra o computador<small>Todos contra todos ou em times</small></button>
-    <button class="btn alt" id="btnOnline">Online com amigos<small>Até 8 chefs, cada um no seu celular</small></button></div>
-    <div class="how"><b>Como jogar</b><br>📱 Arraste o dedo no lado esquerdo para andar e toque em <b>EMPURRAR</b> para dar um tranco.<br>⌨️ No computador: <b>WASD</b> ou setas para andar e <b>Espaço</b> para empurrar.<br>🔥 Depois de 30 segundos a frigideira começa a encolher!</div>
+    <button class="btn alt" id="btnOnline">Online com amigos<small>Até 8 chefs, cada um no seu celular</small></button>
+    <button class="btn med" id="btnShop">Loja<small id="shopCoins">🪙 0 moedas</small></button></div>
+    <div class="how"><b>Como jogar</b><br>📱 Arraste o dedo no lado esquerdo para andar e toque em <b>EMPURRAR</b> para dar um tranco.<br>🛡️ Segure <b>SEGURAR</b> para levar menos empurrão (deixa você lento).<br>⌨️ No computador: <b>WASD</b>/setas para andar, <b>Espaço</b> empurra, <b>Shift</b> segura.<br>🔥 Depois de 30 segundos a frigideira começa a encolher!</div>
   </div>
 </div>
 
 <div class="overlay hidden" id="diff">
   <div class="card">
-    <h2>Modo de jogo</h2>
-    <div class="seg" id="cpuMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
+    <h2>Nova partida</h2>
+    <div class="cols"><div><p class="lbl3">Modo</p><div class="seg" id="cpuMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div></div>
+    <div><p class="lbl3">Arena</p><div class="seg" id="cpuArena"><button data-a="pan" class="on">Frigideira</button><button data-a="board">Tábua</button><button data-a="pizza">Pizza</button></div></div></div>
     <p class="sub" id="cpuModeSub" style="margin:0 0 6px">Você + 7 chefs, todos contra todos</p>
     <h2 style="margin-top:6px">Escolha o nível</h2>
     <div class="cols"><button class="btn easy" data-d="easy">Fácil<small>Chefs distraídos e lentos</small></button>
@@ -142,6 +162,7 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
     </div><div>
     <div id="hostCtl">
       <div class="seg" id="onMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
+      <div class="seg" id="onArena"><button data-a="pan" class="on">Frigideira</button><button data-a="board">Tábua</button><button data-a="pizza">Pizza</button></div>
       <label class="lbl">Completar com bots
         <select class="in" id="botSel"><option value="none">Sem bots</option><option value="easy">Fáceis</option><option value="medium">Médios</option><option value="hard">Difíceis</option></select></label>
       <button class="btn" id="btnStartOnline">Começar partida</button>
@@ -150,6 +171,17 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
     <p class="status" id="lobbyStatus"></p>
     <button class="btn alt" id="btnLeave">Sair da sala</button>
     </div></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="shop">
+  <div class="card">
+    <h2>Loja do Chef</h2>
+    <p class="coins" id="shopBal">🪙 0</p>
+    <p class="sub" style="margin:0">Ganhe moedas jogando: 10 por partida, 5 por chef que você derrubar e 25 por vitória.</p>
+    <div class="shop" id="shopGrid"></div>
+    <p class="status" id="shopMsg"></p>
+    <button class="btn alt" id="btnShopBack">Voltar</button>
   </div>
 </div>
 
@@ -239,6 +271,43 @@ const white=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.2,.06,20),new THREE.
 const yolk=new THREE.Mesh(new THREE.SphereGeometry(.42,16,10),new THREE.MeshStandardMaterial({color:0xffb21a,roughness:.3}));yolk.scale.y=.5;yolk.position.y=.08;
 egg.add(white,yolk);egg.position.set(0,.04,0);pan.add(egg);
 
+// Tábua de cortar (quadrada)
+const HB=R0*.88;
+const board=new THREE.Group();scene.add(board);board.visible=false;
+{const wood=new THREE.MeshStandardMaterial({color:0xc8955a,roughness:.85});
+ const b=new THREE.Mesh(new THREE.BoxGeometry(HB*2,.8,HB*2),wood);b.position.y=-.4;b.receiveShadow=true;board.add(b);
+ const grainMat=new THREE.MeshBasicMaterial({color:0xa9763f});
+ for(let i=-4;i<=4;i++){const g=new THREE.Mesh(new THREE.PlaneGeometry(HB*1.9,.06+Math.abs(i%3)*.03),grainMat);g.rotation.x=-Math.PI/2;g.position.set((i%2)*.6,.01,i*2.05+.3);board.add(g)}
+ const grooveMat=new THREE.MeshBasicMaterial({color:0x8a5a2b});
+ [[0,HB-.7,HB*2-1.4,.18],[0,-(HB-.7),HB*2-1.4,.18]].forEach(([x,z,w,h])=>{const g=new THREE.Mesh(new THREE.PlaneGeometry(w,h),grooveMat);g.rotation.x=-Math.PI/2;g.position.set(x,.012,z);board.add(g)});
+ [[HB-.7,0],[-(HB-.7),0]].forEach(([x,z])=>{const g=new THREE.Mesh(new THREE.PlaneGeometry(.18,HB*2-1.4),grooveMat);g.rotation.x=-Math.PI/2;g.position.set(x,.012,z);board.add(g)});
+ const tom=new THREE.MeshStandardMaterial({color:0xd63b2a,roughness:.5}),seed=new THREE.MeshBasicMaterial({color:0xf3d38a});
+ [[-3.5,-2.5],[2.8,3.4],[4.2,-3.8]].forEach(([x,z])=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,20),tom);t.position.set(x,.04,z);board.add(t);
+   const sd=new THREE.Mesh(new THREE.CircleGeometry(.38,16),seed);sd.rotation.x=-Math.PI/2;sd.position.set(x,.09,z);board.add(sd)});
+ const leg=new THREE.MeshStandardMaterial({color:0x8a5a2b,roughness:.9});
+ [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([a,c])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(1.2,.5,1.2),leg);l.position.set(a*(HB-1),-1.05,c*(HB-1));board.add(l)});
+}
+// Pizza giratória
+const pizza=new THREE.Group();scene.add(pizza);pizza.visible=false;
+{const dough=new THREE.Mesh(new THREE.CylinderGeometry(R0,R0*.96,.6,64),new THREE.MeshStandardMaterial({color:0xe2a85a,roughness:.9}));dough.position.y=-.3;dough.receiveShadow=true;pizza.add(dough);
+ const cheese=new THREE.Mesh(new THREE.CircleGeometry(R0-.7,64),new THREE.MeshStandardMaterial({color:0xffd25e,roughness:.7}));cheese.rotation.x=-Math.PI/2;cheese.position.y=.01;cheese.receiveShadow=true;pizza.add(cheese);
+ const crust=new THREE.Mesh(new THREE.TorusGeometry(R0-.35,.42,10,64),new THREE.MeshStandardMaterial({color:0xc9803a,roughness:.9}));crust.rotation.x=Math.PI/2;crust.position.y=.02;pizza.add(crust);
+ const pep=new THREE.MeshStandardMaterial({color:0xb5301f,roughness:.55}),bas=new THREE.MeshStandardMaterial({color:0x3f8f3a,roughness:.6});
+ for(let i=0;i<16;i++){const a=i*2.4,r=1.6+((i*37)%70)/10;const m=new THREE.Mesh(new THREE.CylinderGeometry(.72,.72,.07,20),pep);m.position.set(Math.cos(a)*r,.04,Math.sin(a)*r);m.receiveShadow=true;pizza.add(m)}
+ for(let i=0;i<7;i++){const a=i*0.9+.4,r=3+i;const l=new THREE.Mesh(new THREE.SphereGeometry(.35,10,6),bas);l.scale.set(1.3,.15,.7);l.position.set(Math.cos(a)*r,.05,Math.sin(a)*r);pizza.add(l)}
+ // fatias
+ const cut=new THREE.MeshBasicMaterial({color:0xe0a94b});
+ for(let i=0;i<4;i++){const c=new THREE.Mesh(new THREE.PlaneGeometry(.07,(R0-.8)*2),cut);c.rotation.x=-Math.PI/2;c.rotation.z=i*Math.PI/4;c.position.y=.03;pizza.add(c)}
+}
+const ARENAS={pan:'Frigideira',board:'Tábua',pizza:'Pizza'},ARENA_THE={pan:'A frigideira',board:'A tábua',pizza:'A pizza'};
+const PIZZA_W=.32;
+let arena='pan',cpuArena='pan',arenaAng=0;
+function setArena(a){arena=ARENAS[a]?a:'pan';pan.visible=arena==='pan';board.visible=arena==='board';pizza.visible=arena==='pizza';
+  const fire=arena!=='board';flames.forEach(f=>f.visible=fire);burner.visible=fire;fireLight.visible=fire;arenaAng=0;pizza.rotation.y=0;scaleArena(1)}
+function scaleArena(k){pan.scale.set(k,1,k);board.scale.set(k,1,k);pizza.scale.set(k,1,k)}
+function edgeDist(x,z){return arena==='board'?platR*.88-Math.max(Math.abs(x),Math.abs(z)):platR-Math.hypot(x,z)}
+function edgeNorm(x,z){if(arena==='board')return Math.abs(x)>Math.abs(z)?[Math.sign(x)||1,0]:[0,Math.sign(z)||1];const l=Math.hypot(x,z)||1;return[x/l,z/l]}
+
 /* ---------- Chefs ---------- */
 const COLORS=[0xffc93c,0x3a86ff,0x2ec4b6,0xff5d8f,0x8338ec,0x06d6a0,0xff8c1a,0x8ac926];
 const SKINS=[0xf1c27d,0xe0ac69,0xc68642,0x8d5524,0xffdbac,0xd8a27a,0xa86b3c,0xf5d0a9];
@@ -256,12 +325,13 @@ function label(text,color){
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false,transparent:true}));
   s.scale.set(2.6,.73,1);s.position.y=3.05;s.renderOrder=10;return s;
 }
-function makeChef(col,skin,name,isPlayer,mustache,team=-1){
+function makeChef(col,skin,name,isPlayer,mustache,team=-1,look=null){
   const g=new THREE.Group();
   const W=std(0xf8f6f0),C=std(col,.6),S=std(skin,.8),D=std(0x222222,.5),B=std(0x4a2a14,.8);
   add(g,new THREE.CylinderGeometry(.42,.54,.95,18),W,0,.66,0);               // dólmã
   const apronGeo=new THREE.CylinderGeometry(.56,.56,.55,18,1,true,-.95,1.9);
-  const ap=add(g,apronGeo,new THREE.MeshStandardMaterial({color:col,roughness:.6,side:THREE.DoubleSide}),0,.47,0); // avental
+  const apM=look&&team<0?apronMat(look.ap):new THREE.MeshStandardMaterial({color:col,roughness:.6,side:THREE.DoubleSide});
+  const ap=add(g,apronGeo,apM,0,.47,0); // avental
   add(g,new THREE.TorusGeometry(.33,.1,8,18),C,0,1.12,0).rotation.x=Math.PI/2; // lenço
   add(g,new THREE.SphereGeometry(.05,8,6),D,0,.98,.43);add(g,new THREE.SphereGeometry(.05,8,6),D,0,.84,.47); // botões
   add(g,new THREE.SphereGeometry(.37,20,14),S,0,1.45,0);                       // cabeça
@@ -280,16 +350,129 @@ function makeChef(col,skin,name,isPlayer,mustache,team=-1){
   g.add(label(name,isPlayer?'#ffc93c':team===0?'#ff9a8a':team===1?'#9cc4ff':'#ffffff'));
   if(team>=0){const tr=new THREE.Mesh(new THREE.RingGeometry(.62,.74,32),new THREE.MeshBasicMaterial({color:TEAM_COL[team],transparent:true,opacity:.85}));tr.rotation.x=-Math.PI/2;tr.position.y=.03;g.add(tr)}
   if(isPlayer){const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.9,32),new THREE.MeshBasicMaterial({color:0xffc93c,transparent:true,opacity:.9}));ring.rotation.x=-Math.PI/2;ring.position.y=.04;g.add(ring)}
-  scene.add(g);return {g,arms};
+  if(look&&look.cr)g.add(makeCrown());
+  const shield=new THREE.Mesh(new THREE.SphereGeometry(1.05,20,14),new THREE.MeshBasicMaterial({color:0x7ff3e6,transparent:true,opacity:.28,depthWrite:false}));
+  shield.position.y=1.1;shield.visible=false;g.add(shield);
+  const emo=label('',0);emo.position.y=3.9;emo.scale.set(1.5,1.5,1);emo.visible=false;g.add(emo);
+  scene.add(g);return {g,arms,shield,emo};
 }
 
 /* ---------- Som ---------- */
-let AC=null;
+let AC=null,MASTER=null,MUS=null,muted=false;
+try{muted=localStorage.getItem('chefMute')==='1'}catch(e){}
+function ac(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();MASTER=AC.createGain();MASTER.gain.value=muted?0:1;MASTER.connect(AC.destination);
+    MUS=AC.createGain();MUS.gain.value=.55;MUS.connect(MASTER)}
+  if(AC.state==='suspended')AC.resume().catch(()=>{});return AC}
 function beep(f,d=.12,type='square',v=.08,slide=0){
-  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();
+  try{ac();const o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),AC.currentTime+d);
-  g.gain.value=v;g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}
+  g.gain.value=v;g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.connect(g);g.connect(MASTER);o.start();o.stop(AC.currentTime+d)}catch(e){}
 }
+let noiseBuf=null;
+function noise(){if(!noiseBuf){noiseBuf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return noiseBuf}
+function ploft(v=1){try{ac();const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(190,t);o.frequency.exponentialRampToValueAtTime(45,t+.35);
+  g.gain.setValueAtTime(.22*v,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.connect(g);g.connect(MASTER);o.start(t);o.stop(t+.42);
+  const n=AC.createBufferSource(),f=AC.createBiquadFilter(),gn=AC.createGain();n.buffer=noise();f.type='lowpass';f.frequency.value=900;
+  gn.gain.setValueAtTime(.18*v,t);gn.gain.exponentialRampToValueAtTime(.001,t+.25);n.connect(f);f.connect(gn);gn.connect(MASTER);n.start(t);n.stop(t+.3);
+  [520,390].forEach((fr,i)=>beep(fr,.18,'triangle',.05*v,-180))}catch(e){}}
+// chiado da frigideira
+let sizzle=null;
+function setSizzle(on){try{ac();
+  if(on&&!sizzle){const n=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain(),lfo=AC.createOscillator(),lg=AC.createGain();
+    n.buffer=noise();n.loop=true;f.type='bandpass';f.frequency.value=5200;f.Q.value=.7;g.gain.value=.018;
+    lfo.frequency.value=7;lg.gain.value=.008;lfo.connect(lg);lg.connect(g.gain);lfo.start();
+    n.connect(f);f.connect(g);g.connect(MASTER);n.start();sizzle={n,lfo}}
+  else if(!on&&sizzle){sizzle.n.stop();sizzle.lfo.stop();sizzle=null}}catch(e){}}
+// música de fundo (gerada na hora, em loop)
+const BPM=128,STEP=60/BPM/4;
+const CH=[[48,55,64,67],[45,52,60,64],[41,48,57,60],[43,50,59,62]]; // C Am F G
+const LEAD=[76,0,79,0,81,79,76,0,74,0,76,0,72,0,74,0, 72,0,76,0,79,0,77,76,74,0,72,0,71,0,74,0];
+let musStep=0,musNext=0,musTimer=null;
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function note(t,m,d,type,v,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=mtof(m);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(dest);o.start(t);o.stop(t+d+.02)}
+function hat(t,v){const n=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();n.buffer=noise();f.type='highpass';f.frequency.value=7000;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+.05);n.connect(f);f.connect(g);g.connect(MUS);n.start(t);n.stop(t+.06)}
+function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);
+  g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.16);o.connect(g);g.connect(MUS);o.start(t);o.stop(t+.18)}
+function musTick(){if(!AC)return;const ahead=AC.currentTime+.15;
+  while(musNext<ahead){const s=musStep%64,bar=Math.floor(s/16),b=s%16,ch=CH[bar],t=musNext;
+    const busy=state==='play'||state==='count';
+    if(b%4===0)note(t,ch[0]-12,STEP*3.5,'triangle',.22,MUS);
+    if(b===6||b===14)note(t,ch[0]-12+12,STEP*1.5,'triangle',.14,MUS);
+    if(b%8===4){ch.slice(1).forEach(m=>note(t,m,STEP*2.5,'square',.025,MUS))}
+    if(busy){if(b%4===0)kick(t);if(b%2===1)hat(t,.05)}
+    const ld=LEAD[s%32];if(ld&&(busy||s%32<16))note(t,ld,STEP*1.6,'square',busy?.045:.03,MUS);
+    musNext+=STEP;musStep++}}
+function startMusic(){try{ac();if(musTimer)return;musNext=AC.currentTime+.1;musStep=0;musTimer=setInterval(musTick,40)}catch(e){}}
+function toggleMute(){muted=!muted;try{localStorage.setItem('chefMute',muted?'1':'0')}catch(e){}
+  if(MASTER)MASTER.gain.value=muted?0:1;$('muteBtn').textContent=muted?'🔇':'🔊';if(!muted)startMusic()}
+
+/* ---------- Moedas, loja e visual ---------- */
+const APRONS=[
+  {id:'classico',n:'Clássico',c:0xffc93c,p:0},{id:'tomate',n:'Tomate',c:0xe2402f,p:30},{id:'oceano',n:'Oceano',c:0x3a86ff,p:30},
+  {id:'menta',n:'Menta',c:0x2ec4b6,p:30},{id:'chiclete',n:'Chiclete',c:0xff5d8f,p:40},{id:'uva',n:'Uva',c:0x8338ec,p:40},
+  {id:'carvao',n:'Carvão',c:0x2b2b2b,p:60},{id:'xadrez',n:'Xadrez',c:0xd8342a,p:90,pat:'xadrez'},{id:'ouro',n:'Ouro',c:0xd4af37,p:150,gold:true}];
+const CROWN_PRICE=200;
+const SAVE=(()=>{let d={};try{d=JSON.parse(localStorage.getItem('chefSave')||'{}')}catch(e){}
+  return{coins:+d.coins||0,owned:Array.isArray(d.owned)?d.owned:['classico'],apron:d.apron||'classico',crown:!!d.crown,crownOwned:!!d.crownOwned}})();
+if(!SAVE.owned.includes('classico'))SAVE.owned.push('classico');
+function saveGame(){try{localStorage.setItem('chefSave',JSON.stringify(SAVE))}catch(e){}updateCoins()}
+function updateCoins(){const e=$('shopCoins');if(e)e.textContent='🪙 '+SAVE.coins+' moedas'}
+function apronDef(id){return APRONS.find(a=>a.id===id)||APRONS[0]}
+function apronColor(id){return apronDef(id).c}
+function myLook(){return{ap:SAVE.apron,cr:SAVE.crown&&SAVE.crownOwned}}
+function cleanLook(l){if(!l||typeof l!=='object')return null;return{ap:apronDef(l.ap).id,cr:!!l.cr}}
+let checkerTex=null;
+function apronMat(id){const a=apronDef(id);
+  if(a.pat==='xadrez'){if(!checkerTex){const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d');
+      for(let i=0;i<8;i++)for(let j=0;j<8;j++){x.fillStyle=(i+j)%2?'#ffffff':'#d8342a';x.fillRect(i*8,j*8,8,8)}
+      checkerTex=new THREE.CanvasTexture(cv);checkerTex.wrapS=checkerTex.wrapT=THREE.RepeatWrapping;checkerTex.repeat.set(2,1)}
+    return new THREE.MeshStandardMaterial({map:checkerTex,roughness:.6,side:THREE.DoubleSide})}
+  return new THREE.MeshStandardMaterial({color:a.c,roughness:a.gold?.25:.6,metalness:a.gold?.75:0,side:THREE.DoubleSide})}
+function makeCrown(){const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0xffc93c,metalness:.8,roughness:.25}),j=new THREE.MeshStandardMaterial({color:0xe2402f,roughness:.3});
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.18,20,1,true),m);band.material.side=THREE.DoubleSide;g.add(band);
+  for(let i=0;i<5;i++){const a=i/5*Math.PI*2,t=new THREE.Mesh(new THREE.ConeGeometry(.09,.22,6),m);t.position.set(Math.cos(a)*.3,.18,Math.sin(a)*.3);g.add(t);
+    const gem=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),j);gem.position.set(Math.cos(a)*.34,0,Math.sin(a)*.34);g.add(gem)}
+  g.position.y=2.5;return g}
+function renderShop(){
+  $('shopBal').textContent='🪙 '+SAVE.coins+' moedas';$('shopMsg').textContent='';
+  const sw=a=>a.pat==='xadrez'?'background:repeating-conic-gradient(#d8342a 0 25%,#fff 0 50%) 0 0/12px 12px':
+    `background:#${a.c.toString(16).padStart(6,'0')}`+(a.gold?';box-shadow:inset 0 0 10px #fff8':'');
+  let h=APRONS.map(a=>{const own=SAVE.owned.includes(a.id),on=SAVE.apron===a.id;
+    return `<div class="item ${on?'on':''} ${own?'':'lock'}" data-id="${a.id}"><div class="sw" style="${sw(a)}"></div><b>${a.n}</b>${on?'Usando':own?'Usar':'🪙 '+a.p}</div>`}).join('');
+  h+=`<div class="item ${SAVE.crown&&SAVE.crownOwned?'on':''} ${SAVE.crownOwned?'':'lock'}" data-id="coroa"><div class="sw" style="background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px">👑</div><b>Coroa</b>${SAVE.crownOwned?(SAVE.crown?'Usando':'Usar'):'🪙 '+CROWN_PRICE}</div>`;
+  $('shopGrid').innerHTML=h;
+}
+function shopClick(id){
+  if(id==='coroa'){
+    if(SAVE.crownOwned){SAVE.crown=!SAVE.crown;beep(700,.06)}
+    else if(SAVE.coins>=CROWN_PRICE){SAVE.coins-=CROWN_PRICE;SAVE.crownOwned=SAVE.crown=true;cashSound()}
+    else{renderShop();$('shopMsg').textContent=`Faltam ${CROWN_PRICE-SAVE.coins} moedas para a coroa.`;return}
+  }else{const a=apronDef(id);
+    if(SAVE.owned.includes(a.id)){SAVE.apron=a.id;beep(700,.06)}
+    else if(SAVE.coins>=a.p){SAVE.coins-=a.p;SAVE.owned.push(a.id);SAVE.apron=a.id;cashSound()}
+    else{renderShop();$('shopMsg').textContent=`Faltam ${a.p-SAVE.coins} moedas para o avental ${a.n}.`;return}}
+  saveGame();renderShop();
+}
+function cashSound(){[880,1175,1568].forEach((f,i)=>setTimeout(()=>beep(f,.12,'square',.05),i*70));vib(40)}
+
+/* ---------- Emojis (online) ---------- */
+const EMOS=['😂','🔥','👋','😎'];
+const emoTex={};
+function emoTexture(e){if(emoTex[e])return emoTex[e];const cv=document.createElement('canvas');cv.width=cv.height=128;const x=cv.getContext('2d');
+  x.fillStyle='#fff6e8';x.strokeStyle='#2a1b14';x.lineWidth=8;x.beginPath();x.arc(64,60,52,0,Math.PI*2);x.fill();x.stroke();
+  x.font='68px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(e,64,64);return emoTex[e]=new THREE.CanvasTexture(cv)}
+function showEmote(i,e){const c=chefs[i];if(!c||c.dead)return;const s=c.m.emo;s.material.map=emoTexture(EMOS[e%EMOS.length]);s.material.needsUpdate=true;
+  s.material.opacity=1;s.visible=true;c.emoT=2;beep(900+e*120,.06,'triangle',.04)}
+let emoLast=0;
+function sendEmote(e){const t=performance.now();if(t-emoLast<900||!net)return;emoLast=t;
+  if(mode==='host'){const i=chefs.indexOf(player);showEmote(i,e);netSendAll({t:'emo',i,e})}
+  else if(mode==='client'&&net.host)net.host.send({t:'emo',e})}
+
+/* ---------- Vibração ---------- */
+function vib(p){try{const n=(typeof TOPW!=='undefined'?TOPW:window).navigator;if(n.vibrate)n.vibrate(p)}catch(e){}}
 
 /* ---------- Dificuldade ---------- */
 const DIFF={
@@ -297,7 +480,7 @@ const DIFF={
   medium:{speed:.86,react:.40,dash:.70,edge:.80,err:.25,cd:1.45,bias:.12,dodge:.25},
   hard:  {speed:1.0,react:.18,dash:1.0,edge:1.05,err:.08,cd:1.1,bias:.35,dodge:.6}
 };
-const ACC=26,DRAG=3.6,RAD=.6,DASH_IMP=10.5,PUSH=9.5,G=28;
+const ACC=26,DRAG=3.6,RAD=.6,DASH_IMP=10.5,PUSH=9.5,G=28,GUARD_SPD=.4,GUARD_TAKE=.3;
 
 /* ---------- Estado ---------- */
 let chefs=[],state='menu',mode='demo',diff='medium',D=DIFF.medium,platR=R0,time=0,paused=false,player=null,endTimer=-1,shrinkMsg=false,demoReset=0;
@@ -306,11 +489,11 @@ function lerpA(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Ma
 function clearChefs(){chefs.forEach(c=>scene.remove(c.m.g));chefs=[];}
 function setup(withPlayer){
   if(withPlayer&&teamSize>0){
-    const slots=[{name:'Você',human:false,team:0}];
+    const slots=[{name:'Você',human:false,team:0,look:myLook()}];
     for(let i=1;i<teamSize;i++)slots.push({name:BOT_NAMES[i],human:false,team:0});
     for(let i=0;i<teamSize;i++)slots.push({name:BOT_NAMES[4+i],human:false,team:1});
     setupOnline(slots,0);return}
-  clearChefs();platR=R0;pan.scale.set(1,1,1);egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;
+  clearChefs();platR=R0;scaleArena(1);arenaAng=0;pizza.rotation.y=0;egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;
   const order=[...Array(8).keys()].sort(()=>Math.random()-.5);
   for(let i=0;i<8;i++){
     const isP=withPlayer&&i===0;
@@ -319,7 +502,8 @@ function setup(withPlayer){
     const a=i/8*Math.PI*2+Math.PI/2, r=7;
     const c={x:Math.cos(a)*r,z:Math.sin(a)*r,vx:0,vz:0,y:0,vy:0,face:0,falling:false,dead:false,place:0,
       dashCd:.5+Math.random(),dashT:0,stun:0,isP,name,col,spd:isP?1:D.speed,
-      ai:{t:Math.random()*.5,target:null,err:0},m:makeChef(col,SKINS[order[i]],name,isP,order[i]%3===0)};
+      ai:{t:Math.random()*.5,target:null,err:0,gT:0},m:makeChef(isP?apronColor(SAVE.apron):col,SKINS[order[i]],name,isP,order[i]%3===0,-1,isP?myLook():null)};
+    if(isP)c.col=apronColor(SAVE.apron);
     c.face=Math.atan2(-c.x,-c.z);
     chefs.push(c);if(isP)player=c;
   }
@@ -353,6 +537,21 @@ pb.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();pb.c
 pb.addEventListener('touchend',()=>pb.classList.remove('press'));
 pb.addEventListener('mousedown',()=>{if(player)dash(player)});
 
+let guardHeld=false;
+const gb=$('guardBtn');
+gb.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();guardHeld=true;gb.classList.add('press')},{passive:false});
+gb.addEventListener('touchend',e=>{e.preventDefault();guardHeld=false;gb.classList.remove('press')},{passive:false});
+gb.addEventListener('touchcancel',()=>{guardHeld=false;gb.classList.remove('press')});
+gb.addEventListener('mousedown',()=>{guardHeld=true;gb.classList.add('press')});
+addEventListener('mouseup',()=>{if(guardHeld&&!('ontouchstart' in window)){guardHeld=false;gb.classList.remove('press')}});
+function wantGuard(){return guardHeld||!!(keys.ShiftLeft||keys.ShiftRight||keys.KeyE)}
+// energia do escudo: gasta segurando, recarrega soltando
+function guardStep(c,want,dt){
+  if(c.gE==null)c.gE=1;
+  if(c.gLock&&c.gE>.3)c.gLock=false;
+  c.guard=!!want&&!c.gLock&&!c.falling&&c.gE>0;
+  if(c.guard){c.gE-=dt*.4;if(c.gE<=0){c.gE=0;c.gLock=true;c.guard=false}}else c.gE=Math.min(1,c.gE+dt*.25);
+}
 function playerInput(){
   let x=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
   let z=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
@@ -364,10 +563,10 @@ function playerInput(){
 /* ---------- Jogabilidade ---------- */
 function dash(c){
   if(mode==='client'){
-    if(c===player&&net&&net.host&&state==='play'&&!c.falling&&net.cd<=0){net.cd=1;net.host.send({t:'dash'});beep(260,.12,'sawtooth',.06,180)}
+    if(c===player&&net&&net.host&&state==='play'&&!c.falling&&net.cd<=0&&!c.guard){net.cd=1;net.host.send({t:'dash'});beep(260,.12,'sawtooth',.06,180)}
     return;
   }
-  if(state!=='play'||paused||c.dashCd>0||c.falling||c.dead||c.stun>0)return;
+  if(state!=='play'||paused||c.dashCd>0||c.falling||c.dead||c.stun>0||c.guard)return;
   c.dashCd=(c.isP||c.human)?1.0:D.cd*(.85+Math.random()*.3);c.dashT=.32;
   c.vx+=Math.sin(c.face)*DASH_IMP;c.vz+=Math.cos(c.face)*DASH_IMP;
   if(c.isP)beep(260,.12,'sawtooth',.06,180);
@@ -375,7 +574,7 @@ function dash(c){
 function chooseTarget(c){
   let best=null,bs=1e9;
   for(const o of standing()){if(o===c||(o.team>=0&&o.team===c.team))continue;
-    const d=Math.hypot(o.x-c.x,o.z-c.z),edge=Math.hypot(o.x,o.z)/platR;
+    const d=Math.hypot(o.x-c.x,o.z-c.z),edge=1-edgeDist(o.x,o.z)/platR;
     const s=d-edge*4+Math.random()*2.2-((o.isP||o.human)?D.bias*7:0);
     if(s<bs){bs=s;best=o}}
   c.ai.target=best;c.ai.err=(Math.random()-.5)*2*D.err;
@@ -384,18 +583,19 @@ function aiInput(c,dt){
   const p=c.ai;p.t-=dt;
   if(p.t<=0||!p.target||p.target.falling||p.target.dead){p.t=D.react*(.7+Math.random()*.6);chooseTarget(c)}
   const T=p.target;if(!T)return[0,0];
-  const tl=Math.hypot(T.x,T.z)||1,ox=T.x/tl,oz=T.z/tl;
+  const [ox,oz]=edgeNorm(T.x,T.z);
   const toT=Math.hypot(T.x-c.x,T.z-c.z);
   let dx,dz;
   if(toT<2.6){dx=T.x-c.x;dz=T.z-c.z}else{dx=T.x-ox*1.5-c.x;dz=T.z-oz*1.5-c.z}
   let l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
   const ca=Math.cos(p.err),sa=Math.sin(p.err);[dx,dz]=[dx*ca-dz*sa,dx*sa+dz*ca];
   // fugir da borda
-  const cl=Math.hypot(c.x,c.z)||1,zone=2.8*D.edge,margin=platR-cl;
-  if(margin<zone){const w=(zone-margin)/zone*2.2*D.edge;dx-=c.x/cl*w;dz-=c.z/cl*w}
+  const zone=2.8*D.edge,margin=edgeDist(c.x,c.z);
+  if(margin<zone){const w=(zone-margin)/zone*2.2*D.edge,[en,ez0]=edgeNorm(c.x,c.z);dx-=en*w;dz-=ez0*w}
   // desviar de quem vem empurrando
   if(D.dodge>0)for(const o of chefs){if(o===c||o.dashT<=0||o.falling)continue;
     const ex=c.x-o.x,ez=c.z-o.z,ed=Math.hypot(ex,ez);
+    if(ed<2.6&&(Math.sin(o.face)*ex+Math.cos(o.face)*ez)/ed>.7&&!(o.team>=0&&o.team===c.team)&&edgeDist(c.x,c.z)<3.2&&c.ai.gT<=0&&Math.random()<D.dodge*.5){c.ai.gT=.6;continue}
     if(ed<3.2&&(Math.sin(o.face)*ex+Math.cos(o.face)*ez)/ed>.7&&Math.random()<D.dodge){
       const sx=-Math.cos(o.face),sz=Math.sin(o.face),side=(sx*-c.x+sz*-c.z)>0?1:-1;dx+=sx*side*2;dz+=sz*side*2}}
   l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
@@ -407,14 +607,20 @@ function aiInput(c,dt){
   return[dx,dz];
 }
 function knock(from,to,nx,nz){
-  to.vx+=nx*PUSH;to.vz+=nz*PUSH;to.stun=.38;from.dashT=0;from.vx*=.35;from.vz*=.35;
+  const k=to.guard?GUARD_TAKE:1;
+  to.vx+=nx*PUSH*k;to.vz+=nz*PUSH*k;to.stun=to.guard?.12:.38;from.dashT=0;from.vx*=.35;from.vz*=.35;
+  to.lastBy=from;to.lastByT=time;
+  if(to===player)vib(to.guard?25:70);else if(from===player)vib(30);
+  if(to.guard)beep(620,.1,'triangle',.05,-200);
   if(mode==='host'&&net)net.ev.push([0,chefs.indexOf(from),chefs.indexOf(to)]);
   if(from.isP||to.isP)beep(140,.18,'square',.09,-60);else beep(180,.08,'square',.025,-60);
 }
 function eliminate(c){
   c.falling=true;c.place=standing().length+1;
+  if(c.lastBy&&c.lastBy!==c&&time-c.lastByT<4)c.lastBy.kos=(c.lastBy.kos||0)+1;
+  if(c===player)vib([120,60,200]);
   if(mode==='host'&&net)net.ev.push([1,chefs.indexOf(c)]);
-  if(c.isP){beep(500,.6,'triangle',.08,-420)}else beep(420,.35,'triangle',.03,-300);
+  ploft(c.isP?1:.35);
 }
 function update(dt){
   if(state==='play'||state==='count'||state==='menu')time+=dt;
@@ -422,16 +628,20 @@ function update(dt){
   const online=mode==='host'||mode==='client';
   if(mode==='client'){clientStep(dt)}else{
   if(active&&time>30&&platR>R_MIN){
-    platR=Math.max(R_MIN,platR-.22*dt);const s=platR/R0;pan.scale.set(s,1,s);
+    platR=Math.max(R_MIN,platR-.22*dt);scaleArena(platR/R0);
     if(platR<R0-2)egg.visible=false;
-    if(!shrinkMsg&&state==='play'){shrinkMsg=true;flash('🔥 A frigideira está encolhendo!',true)}
+    if(!shrinkMsg&&state==='play'){shrinkMsg=true;flash('🔥 '+ARENA_THE[arena]+' está encolhendo!',true)}
   }
+  if(arena==='pizza'&&active){const da=PIZZA_W*dt,cs=Math.cos(da),sn=Math.sin(da);arenaAng+=da;pizza.rotation.y=arenaAng;
+    for(const c of chefs)if(!c.falling&&!c.dead){const x=c.x,z=c.z;c.x=x*cs+z*sn;c.z=-x*sn+z*cs}}
   for(const c of chefs){
     if(c.dead)continue;
     c.dashCd=Math.max(0,c.dashCd-dt);c.dashT=Math.max(0,c.dashT-dt);c.stun=Math.max(0,c.stun-dt);
     let ix=0,iz=0;
     if(active&&!c.falling&&c.stun<=0){[ix,iz]=c.isP?playerInput():c.human?[c.netIn.x,c.netIn.z]:aiInput(c,dt)}
-    const sp=(c.isP||c.human)?1:D.speed;
+    if(c.ai.gT>0)c.ai.gT-=dt;
+    guardStep(c,state==='play'&&(c.isP?wantGuard():c.human?c.netIn.g:c.ai.gT>0),dt);
+    const sp=((c.isP||c.human)?1:D.speed)*(c.guard?GUARD_SPD:1);
     c.vx+=ix*ACC*sp*dt;c.vz+=iz*ACC*sp*dt;
     const dr=Math.exp(-(c.falling?.4:DRAG)*dt);c.vx*=dr;c.vz*=dr;
     c.x+=c.vx*dt;c.z+=c.vz*dt;
@@ -453,7 +663,7 @@ function update(dt){
     }
   }
   // borda
-  for(const c of chefs)if(!c.falling&&!c.dead&&Math.hypot(c.x,c.z)>platR+.15&&(state==='play'||state==='menu'))eliminate(c);
+  for(const c of chefs)if(!c.falling&&!c.dead&&edgeDist(c.x,c.z)<-.15&&(state==='play'||state==='menu'))eliminate(c);
   // fim de jogo
   const st=standing();
   if(state==='play'){
@@ -472,6 +682,8 @@ function update(dt){
   // animação
   for(const c of chefs){
     const g=c.m.g;g.position.set(c.x,c.y,c.z);g.rotation.y=c.face;
+    c.m.shield.visible=!!c.guard&&!c.falling;
+    if(c.emoT>0){c.emoT-=dt;c.m.emo.material.opacity=Math.min(1,c.emoT*2);c.m.emo.position.y=3.9+(2-c.emoT)*.25;if(c.emoT<=0)c.m.emo.visible=false}
     const spd=Math.hypot(c.vx,c.vz),bob=c.falling?0:Math.abs(Math.sin(time*14+c.x))*Math.min(spd,5)*.03;
     g.position.y+=bob;
     const push=c.dashT>0?-1.45:(c.falling?-2.6:-Math.min(spd,6)*.04);
@@ -480,7 +692,7 @@ function update(dt){
   }
   flames.forEach((f,i)=>{f.scale.y=.8+Math.sin(time*9+i*1.7)*.25;f.position.y=-8+Math.sin(time*7+i)*.15});
   fireLight.intensity=2+Math.sin(time*11)*.3;
-  if(player&&state==='play')pb.style.setProperty('--cd',1-player.dashCd/1.0);
+  if(player&&state==='play'){pb.style.setProperty('--cd',1-player.dashCd/1.0);gb.style.setProperty('--g',player.gE==null?1:player.gE);gb.style.opacity=player.gLock?.5:1}
 }
 
 /* ---------- Câmera ---------- */
@@ -498,12 +710,13 @@ function updateCamera(dt){
 /* ---------- UI ---------- */
 let msgT=0;
 function flash(t,small=false,dur=1.4){const m=$('msg');m.textContent=t;m.classList.toggle('small',small);m.style.opacity=1;msgT=dur}
-function show(id){['menu','diff','end','pause','online','lobby','netmsg'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
-function setGameUI(on){['hud','pushBtn'].forEach(x=>$(x).classList.toggle('hidden',!on));
+function show(id){['menu','diff','end','pause','online','lobby','netmsg','shop'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
+function setGameUI(on){['hud','pushBtn','guardBtn'].forEach(x=>$(x).classList.toggle('hidden',!on));guardHeld=false;
+  $('emoBar').classList.toggle('hidden',!on||!(mode==='host'||mode==='client'));
   $('joyHint').classList.toggle('hidden',!on||!('ontouchstart' in window));if(!on){base.classList.add('hidden');joy.id=null}}
 
 function startGame(d){
-  leaveNet();mode='cpu';teamSize=cpuTeam;winTeam=-1;diff=d;D=DIFF[d];setup(true);beginCountdown();
+  leaveNet();mode='cpu';setArena(cpuArena);teamSize=cpuTeam;winTeam=-1;diff=d;D=DIFF[d];setup(true);beginCountdown();
 }
 function beginCountdown(){
   show(null);setGameUI(true);state='count';paused=false;
@@ -511,13 +724,13 @@ function beginCountdown(){
   if(player)camera.position.set(player.x*.5,portrait?25:19,player.z*.5+18);
   let n=3;flash(n);beep(440,.15,'square',.06);
   const iv=setInterval(()=>{n--;if(state!=='count'){clearInterval(iv);return}
-    if(n>0){flash(n);beep(440,.15,'square',.06)}else{flash('JÁ!');beep(880,.3,'square',.07);state='play';time=0;clearInterval(iv)}},800);
+    if(n>0){flash(n);beep(440,.15,'square',.06)}else{flash('JÁ!');beep(880,.3,'square',.07);state='play';time=0;clearInterval(iv);setSizzle(arena!=='board')}},800);
 }
 function showEnd(){
-  state='end';setGameUI(false);
+  state='end';setGameUI(false);setSizzle(false);
   const st=standing();if(teamSize===0&&st.length===1)st[0].place=1;
   const online=mode==='host'||mode==='client';
-  if(mode==='host'&&net)netSendAll({t:'end',pl:chefs.map(c=>c.place),w:winTeam});
+  if(mode==='host'&&net)netSendAll({t:'end',pl:chefs.map(c=>c.place),w:winTeam,ko:chefs.map(c=>c.kos||0)});
   const who=c=>c.isP?'Você':(c.human?esc(c.name):'Chef '+c.name);
   const dot=c=>`<span class="dot" style="background:#${c.col.toString(16).padStart(6,'0')}"></span>`;
   const tail=online?(mode==='client'?' Aguardando o dono da sala começar outra…':''):' Nível: '+{easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff];
@@ -531,16 +744,20 @@ function showEnd(){
   }else{
     won=player.place===1;const win=chefs.find(c=>c.place===1);
     $('endTitle').textContent=won?'🏆 Você venceu!':(online&&win?'🏆 '+(win.human?win.name:'Chef '+win.name)+' venceu!':'💥 Você caiu!');
-    $('endSub').textContent=(won?'Você foi o último chef na frigideira!':(player.place?`Você ficou em ${player.place}º lugar.`:'Você caiu!'))+tail;
+    $('endSub').textContent=(won?'Você foi o último chef de pé!':(player.place?`Você ficou em ${player.place}º lugar.`:'Você caiu!'))+tail;
     const known=chefs.filter(c=>c.place).sort((a,b)=>a.place-b.place),unknown=chefs.filter(c=>!c.place);
     $('rank').innerHTML=[...known,...unknown].map(c=>`<li class="${c.isP?'me':''}"><b style="width:28px">${c.place?c.place+'º':'–'}</b>${dot(c)}${who(c)}${c.place===1?' 👑':''}</li>`).join('');
   }
+  // moedas
+  if(mode==='cpu'||online){const kos=player.kos||0,earn=10+kos*5+(won?25:0);SAVE.coins+=earn;saveGame();
+    $('endSub').textContent+=` 🪙 +${earn} moedas`+(kos?` (${kos} derrubada${kos>1?'s':''})`:'')+'.'}
+  if(won)vib([60,40,60,40,150]);
   $('btnAgain').classList.toggle('hidden',mode==='client');
   $('btnAgain').textContent=mode==='host'?'Nova partida':'Jogar de novo';
   $('btnMenu').textContent=online?'Sair da sala':'Menu inicial';
   show('end');if(won){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,'square',.06),i*130))}
 }
-function toMenu(){leaveNet();state='menu';mode='demo';teamSize=0;D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
+function toMenu(){leaveNet();setSizzle(false);setArena('pan');updateCoins();state='menu';mode='demo';teamSize=0;D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
 function togglePause(){
   if(mode==='host'||mode==='client'){show($('pause').classList.contains('hidden')?'pause':null);return} // online não pausa
   paused=!paused;show(paused?'pause':null)}
@@ -613,7 +830,7 @@ function randCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let 
 function createRoom(tries=0){
   const name=getName();leaveNet();
   const code=randCode(),tr=makeTransport();
-  net={role:'host',tr,code,roster:[{name,conn:null,team:0}],bots:'medium',teamSize:0,started:false,ready:false,ev:[]};
+  net={role:'host',tr,code,roster:[{name,conn:null,team:0,look:myLook()}],bots:'medium',teamSize:0,arena:'pan',started:false,ready:false,ev:[]};
   $('netStatus').textContent='Criando sala…';
   tr.host(code,{
     onReady(){if(!net||net.tr!==tr)return;net.ready=true;$('netStatus').textContent='';toLobby()},
@@ -625,7 +842,7 @@ function createRoom(tries=0){
   });
 }
 function toLobby(){
-  if(!net)return;
+  if(!net)return;setSizzle(false);setArena('pan');
   if(net.role==='host')net.started=false;
   mode='demo';state='menu';D=DIFF.medium;setup(false);setGameUI(false);
   if(net.role==='host')lobbyBroadcast();
@@ -646,8 +863,8 @@ function teamCheck(){ // devolve [pode começar, mensagem]
 }
 function lobbyBroadcast(){
   const names=net.roster.map(r=>r.name),teams=net.roster.map(r=>net.teamSize?r.team:-1);
-  renderLobby(names,teams,0,true,net.bots,net.teamSize);
-  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'lobby',code:net.code,names,teams,you:i,bots:net.bots,ts:net.teamSize}));
+  renderLobby(names,teams,0,true,net.bots,net.teamSize,net.arena);
+  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'lobby',code:net.code,names,teams,you:i,bots:net.bots,ts:net.teamSize,ar:net.arena}));
 }
 function hostMsg(conn,m){
   if(!net||net.role!=='host'||!m)return;
@@ -658,10 +875,11 @@ function hostMsg(conn,m){
     let name=cleanName(m.name);const used=net.roster.map(r=>r.name);let k=2;const base=name.slice(0,8);
     while(used.includes(name))name=base+' '+(k++);
     const c0=net.roster.filter(r=>r.team===0).length,c1=net.roster.length-c0;
-    net.roster.push({name,conn,team:c0<=c1?0:1});beep(700,.08);lobbyBroadcast();return}
+    net.roster.push({name,conn,team:c0<=c1?0:1,look:cleanLook(m.look)});beep(700,.08);lobbyBroadcast();return}
   const c=chefs.find(c=>c.net===conn);if(!c)return;
-  if(m.t==='in'){let x=+m.x||0,z=+m.z||0;const l=Math.hypot(x,z);if(l>1){x/=l;z/=l}c.netIn.x=x;c.netIn.z=z}
+  if(m.t==='in'){let x=+m.x||0,z=+m.z||0;const l=Math.hypot(x,z);if(l>1){x/=l;z/=l}c.netIn.x=x;c.netIn.z=z;c.netIn.g=!!m.g}
   else if(m.t==='dash')dash(c);
+  else if(m.t==='emo'){const t=performance.now();if(t-(c.emoLast||0)<900)return;c.emoLast=t;const e=(m.e|0)%EMOS.length;showEmote(chefs.indexOf(c),e);netSendAll({t:'emo',i:chefs.indexOf(c),e})}
 }
 function hostDrop(conn){
   if(!net||net.role!=='host')return;
@@ -678,19 +896,19 @@ function hostStart(){
   if(ts){
     slots=[];let b=0;
     for(const t of [0,1]){
-      net.roster.filter(r=>r.team===t).forEach(r=>slots.push({name:r.name,human:true,conn:r.conn,team:t}));
+      net.roster.filter(r=>r.team===t).forEach(r=>slots.push({name:r.name,human:true,conn:r.conn,team:t,look:r.look}));
       if(bots)while(slots.filter(x=>x.team===t).length<ts)slots.push({name:free[b++%free.length],human:false,team:t});
     }
   }else{
-    slots=net.roster.map(r=>({name:r.name,human:true,conn:r.conn,team:-1}));
+    slots=net.roster.map(r=>({name:r.name,human:true,conn:r.conn,team:-1,look:r.look}));
     if(bots)for(let i=slots.length,b=0;i<8;i++)slots.push({name:free[b++%free.length],human:false,team:-1});
   }
   if(slots.length<2)return;
-  net.started=true;net.ev=[];mode='host';teamSize=ts;winTeam=-1;D=DIFF[bots?net.bots:'medium'];
+  net.started=true;net.ev=[];mode='host';teamSize=ts;winTeam=-1;setArena(net.arena);D=DIFF[bots?net.bots:'medium'];
   const myIdx=slots.findIndex(x=>x.human&&!x.conn);
   setupOnline(slots,myIdx);
-  const info=slots.map(x=>({n:x.name,h:x.human,t:x.team}));
-  net.roster.forEach(r=>{if(r.conn)r.conn.send({t:'start',slots:info,you:slots.findIndex(x=>x.conn===r.conn),ts})});
+  const info=slots.map(x=>({n:x.name,h:x.human,t:x.team,l:x.look||null}));
+  net.roster.forEach(r=>{if(r.conn)r.conn.send({t:'start',slots:info,you:slots.findIndex(x=>x.conn===r.conn),ts,ar:net.arena})});
   beep(700,.08);beginCountdown();
 }
 let snapT=0;
@@ -698,7 +916,7 @@ function hostTick(dt){
   if(mode!=='host'||!net)return;
   snapT-=dt;if(snapT>0)return;snapT=.05;
   if(state!=='count'&&state!=='play')return;
-  netSendAll({t:'s',r:r2(platR),c:chefs.map(c=>[r2(c.x),r2(c.z),r2(c.y),r2(c.face),(c.falling?1:0)|(c.dead?2:0)|(c.dashT>0?4:0)|(c.stun>0?8:0)]),e:net.ev});
+  netSendAll({t:'s',r:r2(platR),c:chefs.map(c=>[r2(c.x),r2(c.z),r2(c.y),r2(c.face),(c.falling?1:0)|(c.dead?2:0)|(c.dashT>0?4:0)|(c.stun>0?8:0)|(c.guard?16:0)]),e:net.ev,a:r2(arenaAng)});
   net.ev=[];
 }
 // mantém a partida andando se o dono da sala trocar de aba por um instante
@@ -717,7 +935,7 @@ function joinRoom(){
     onOpen(conn){if(!net||net.tr!==tr){conn.close();return}done=true;net.host=conn;
       conn.onData(clientMsg);
       conn.onClose(()=>{if(net&&net.tr===tr)netFail('O dono da sala saiu ou a conexão caiu.')});
-      conn.send({t:'hello',name})},
+      conn.send({t:'hello',name,look:myLook()})},
     onError(type){if(!net||net.tr!==tr||done)return;
       netFail(type==='peer-unavailable'||type==='timeout'?'Sala '+code+' não encontrada. Confira o código e se o dono da sala está com o jogo aberto.':
         type==='nolib'?'Não foi possível carregar o modo online. Verifique a internet.':'Não foi possível conectar. Verifique a internet e tente de novo.')}
@@ -728,21 +946,24 @@ function clientMsg(m){
   if(m.t==='deny'){netFail(m.why);return}
   if(m.t==='lobby'){
     if(mode==='client'||$('lobby').classList.contains('hidden'))toLobby();
-    renderLobby(m.names,m.teams||m.names.map(()=>-1),m.you,false,m.bots,m.ts||0);show('lobby');return}
-  if(m.t==='start'){mode='client';net.cd=0;teamSize=m.ts||0;winTeam=-1;setupOnline(m.slots.map(s=>({name:s.n,human:s.h,team:s.t==null?-1:s.t})),m.you);beginCountdown();return}
+    renderLobby(m.names,m.teams||m.names.map(()=>-1),m.you,false,m.bots,m.ts||0,m.ar||'pan');show('lobby');return}
+  if(m.t==='start'){mode='client';net.cd=0;net.lg=0;teamSize=m.ts||0;winTeam=-1;setArena(m.ar||'pan');setupOnline(m.slots.map(s=>({name:s.n,human:s.h,team:s.t==null?-1:s.t,look:cleanLook(s.l)})),m.you);beginCountdown();return}
   if(mode!=='client')return;
   if(m.t==='s')clientSnap(m);
-  else if(m.t==='end'){m.pl.forEach((p,i)=>{if(chefs[i])chefs[i].place=p});winTeam=m.w==null?-1:m.w;state='end';setGameUI(false);showEnd()}
+  else if(m.t==='emo')showEmote(m.i,m.e);
+  else if(m.t==='end'){m.pl.forEach((p,i)=>{if(chefs[i]){chefs[i].place=p;chefs[i].kos=(m.ko||[])[i]||0}});winTeam=m.w==null?-1:m.w;state='end';setGameUI(false);showEnd()}
 }
 function clientSnap(m){
-  platR=m.r;const s=platR/R0;pan.scale.set(s,1,s);if(platR<R0-2)egg.visible=false;
-  if(platR<R0-.05&&!shrinkMsg&&state==='play'){shrinkMsg=true;flash('🔥 A frigideira está encolhendo!',true)}
+  platR=m.r;scaleArena(platR/R0);if(platR<R0-2)egg.visible=false;
+  if(m.a!=null){arenaAng=m.a;pizza.rotation.y=arenaAng}
+  if(platR<R0-.05&&!shrinkMsg&&state==='play'){shrinkMsg=true;flash('🔥 '+ARENA_THE[arena]+' está encolhendo!',true)}
   m.c.forEach((a,i)=>{const c=chefs[i];if(!c)return;
     c.tx=a[0];c.tz=a[1];c.ty=a[2];c.tf=a[3];
-    const f=a[4],was=c.falling;c.falling=!!(f&1);c.dead=!!(f&2);c.dashT=f&4?.1:0;c.stun=f&8?.1:0;
+    const f=a[4],was=c.falling;c.falling=!!(f&1);c.dead=!!(f&2);c.dashT=f&4?.1:0;c.stun=f&8?.1:0;c.guard=!!(f&16);
     if(c.dead)c.m.g.visible=false;
-    if(c.falling&&!was)c===player?beep(500,.6,'triangle',.08,-420):beep(420,.35,'triangle',.03,-300)});
-  (m.e||[]).forEach(ev=>{if(ev[0]===0){const mine=chefs[ev[1]]===player||chefs[ev[2]]===player;mine?beep(140,.18,'square',.09,-60):beep(180,.08,'square',.025,-60)}});
+    if(c.falling&&!was){ploft(c===player?1:.35);if(c===player)vib([120,60,200])}});
+  (m.e||[]).forEach(ev=>{if(ev[0]===0){const fr=chefs[ev[1]],to=chefs[ev[2]],mine=fr===player||to===player;mine?beep(140,.18,'square',.09,-60):beep(180,.08,'square',.025,-60);
+    if(to===player)vib(to.guard?25:70);else if(fr===player)vib(30)}});
 }
 function clientStep(dt){
   const k=Math.min(1,dt*14),idt=1/Math.max(dt,1e-3);
@@ -753,14 +974,18 @@ function clientStep(dt){
   $('alive').textContent='👨‍🍳 '+standing().length;
   net.cd=Math.max(0,net.cd-dt);if(player)player.dashCd=net.cd;
   const [x,z]=(player&&!player.falling&&state==='play')?playerInput():[0,0];
+  // energia do escudo simulada aqui só para o botão; quem decide é o dono da sala
+  const gWant=state==='play'&&wantGuard();
+  if(player){const g0=player.guard;guardStep(player,gWant,dt);player.guard=g0}
+  const g=gWant&&player&&!player.gLock?1:0;
   net.inT-=dt;
-  if(net.inT<=0&&(Math.abs(x-net.lx)+Math.abs(z-net.lz)>.04||net.inT<-.3)){
-    net.inT=.05;net.lx=x;net.lz=z;net.host.send({t:'in',x:r2(x),z:r2(z)})}
+  if(net.inT<=0&&(Math.abs(x-net.lx)+Math.abs(z-net.lz)>.04||g!==net.lg||net.inT<-.3)){
+    net.inT=.05;net.lx=x;net.lz=z;net.lg=g;net.host.send({t:'in',x:r2(x),z:r2(z),g})}
 }
 
 /* --- comum --- */
 function setupOnline(slots,myIdx){
-  clearChefs();platR=R0;pan.scale.set(1,1,1);egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;player=null;
+  clearChefs();platR=R0;scaleArena(1);arenaAng=0;pizza.rotation.y=0;egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;player=null;
   const n=slots.length,teams=slots.some(x=>x.team>=0);
   slots.forEach((s,i)=>{
     const team=teams?s.team:-1;let a,r=7;
@@ -770,23 +995,25 @@ function setupOnline(slots,myIdx){
     const isP=i===myIdx,col=teams?TEAM_COL[team]:COLORS[i];
     const c={x:Math.cos(a)*r,z:Math.sin(a)*r,vx:0,vz:0,y:0,vy:0,face:0,falling:false,dead:false,place:0,
       dashCd:.5,dashT:0,stun:0,isP,human:!!s.human,name:s.name,col,team,net:s.conn||null,netIn:{x:0,z:0},
-      ai:{t:Math.random()*.5,target:null,err:0},m:makeChef(col,SKINS[i%8],isP?'Você':s.name,isP,i%3===0,team)};
+      ai:{t:Math.random()*.5,target:null,err:0,gT:0},m:makeChef(teams?col:(s.look?apronColor(s.look.ap):col),SKINS[i%8],isP?'Você':s.name,isP,i%3===0,team,s.look||null)};
+    if(!teams&&s.look)c.col=apronColor(s.look.ap);
     c.face=Math.atan2(-c.x,-c.z);c.tx=c.x;c.tz=c.z;c.ty=0;c.tf=c.face;
     chefs.push(c);if(isP)player=c;
   });
 }
-function renderLobby(names,teams,you,isHost,bots,ts){
+function renderLobby(names,teams,you,isHost,bots,ts,ar='pan'){
   $('lobbyCode').textContent=net?net.code:'';
   const nb=bots==='none'?0:ts?Math.max(0,2*ts-names.length):Math.max(0,8-names.length);
   $('lobbyList').innerHTML=names.map((n,i)=>{const t=teams[i];
     const col=t>=0?TEAM_COL[t]:COLORS[i];
     return `<li class="${i===you?'me':''}"><span class="dot" style="background:#${col.toString(16).padStart(6,'0')}"></span>${esc(n)}${i===0?' 👑':''}${i===you?' (você)':''}`+
       (t>=0?`<span class="tag t${t}" data-i="${i}">${isHost?'⇄ ':''}${TEAM_NAMES[t]}</span>`:'')+'</li>'}).join('');
-  const modeTxt=ts?`Modo ${ts}v${ts} · `:'Todos contra todos · ';
+  const modeTxt=(ts?`Modo ${ts}v${ts} · `:'Todos contra todos · ')+ARENAS[ar]+' · ';
   $('lobbySub').textContent=names.length<2&&!ts?'Passe o código para seus amigos entrarem.':modeTxt+`${names.length} jogador${names.length>1?'es':''}`+(nb?` + ${nb} bots`:'');
   $('hostCtl').classList.toggle('hidden',!isHost);$('lobbyWait').classList.toggle('hidden',isHost);
   if(isHost){$('botSel').value=bots;
     document.querySelectorAll('#onMode button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ts));
+    document.querySelectorAll('#onArena button').forEach(b=>b.classList.toggle('on',b.dataset.a===ar));
     const [ok,msg]=teamCheck();$('btnStartOnline').disabled=!ok;$('lobbyStatus').textContent=msg}
   else $('lobbyStatus').textContent='';
 }
@@ -808,6 +1035,15 @@ $('btnInvite').onclick=invite;
 document.querySelectorAll('#cpuMode button').forEach(b=>b.onclick=()=>{cpuTeam=+b.dataset.t;beep(650,.06);
   document.querySelectorAll('#cpuMode button').forEach(x=>x.classList.toggle('on',x===b));
   $('cpuModeSub').textContent=cpuTeam?`Seu time (Vermelho) contra o time Azul: ${cpuTeam} contra ${cpuTeam}`:'Você + 7 chefs, todos contra todos'});
+document.querySelectorAll('#onArena button').forEach(b=>b.onclick=()=>{if(!net||net.role!=='host')return;net.arena=b.dataset.a;beep(650,.06);lobbyBroadcast()});
+document.querySelectorAll('#cpuArena button').forEach(b=>b.onclick=()=>{cpuArena=b.dataset.a;beep(650,.06);
+  document.querySelectorAll('#cpuArena button').forEach(x=>x.classList.toggle('on',x===b))});
+document.querySelectorAll('#emoBar button').forEach(b=>{const f=e=>{e.preventDefault();e.stopPropagation();sendEmote(+b.dataset.e)};
+  b.addEventListener('touchstart',f,{passive:false});b.addEventListener('mousedown',f)});
+$('btnShop').onclick=()=>{beep(600,.08);renderShop();show('shop')};
+$('btnShopBack').onclick=()=>{show('menu');updateCoins()};
+$('shopGrid').addEventListener('click',e=>{const it=e.target.closest('.item');if(it)shopClick(it.dataset.id)});
+$('muteBtn').onclick=toggleMute;$('muteBtn').addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();toggleMute()},{passive:false});
 document.querySelectorAll('#onMode button').forEach(b=>b.onclick=()=>{if(!net||net.role!=='host')return;net.teamSize=+b.dataset.t;balanceTeams();beep(650,.06);lobbyBroadcast()});
 $('lobbyList').addEventListener('click',e=>{const t=e.target.closest('.tag[data-i]');if(!t||!net||net.role!=='host'||!net.teamSize)return;
   const r=net.roster[+t.dataset.i];if(!r)return;r.team=1-r.team;beep(650,.06);lobbyBroadcast()});
@@ -839,7 +1075,9 @@ function checkRotate(){$('rotate').classList.toggle('hidden',!(isTouch&&innerHei
 addEventListener('resize',checkRotate);addEventListener('orientationchange',()=>setTimeout(checkRotate,200));checkRotate();
 $('btnRotate').onclick=goLandscape;
 let triedLand=false;
-addEventListener('pointerdown',()=>{if(!triedLand&&isTouch){triedLand=true;goLandscape()}},{capture:true});
+addEventListener('pointerdown',()=>{if(!triedLand&&isTouch){triedLand=true;goLandscape()}startMusic()},{capture:true});
+addEventListener('keydown',()=>startMusic(),{once:true});
+$('muteBtn').textContent=muted?'🔇':'🔊';
 
 /* ---------- Loop ---------- */
 toMenu();
@@ -853,7 +1091,7 @@ function loop(now){
   renderer.render(scene,camera);requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-window.__game={get state(){return state},get mode(){return mode},get chefs(){return chefs},get net(){return net},get player(){return player},startGame};
+window.__game={get save(){return SAVE},get arena(){return arena},showEmote,get state(){return state},get mode(){return mode},get chefs(){return chefs},get net(){return net},get player(){return player},startGame};
 })();
 </script>
 </body>
