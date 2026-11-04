@@ -47,6 +47,14 @@ h2{font-family:"Lilita One",sans-serif;font-weight:400;font-size:34px;margin:16p
 #pushBtn.press{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
 #pauseBtn{pointer-events:auto;cursor:pointer}
 @media (hover:hover) and (pointer:fine){#joyHint{display:none}}
+.card{max-height:calc(100% - 8px);overflow-y:auto}
+input.in{display:block;width:100%;border:3px solid var(--ink);border-radius:12px;padding:12px;margin:8px 0;font:800 18px Nunito,sans-serif;text-align:center;
+  background:#fff;color:var(--ink);user-select:text;-webkit-user-select:text}
+.row{display:flex;gap:8px;align-items:center}.row input.in{flex:1;text-transform:uppercase;letter-spacing:4px;margin:10px 0}.row .btn{width:auto;flex:none;padding:12px 16px;margin:10px 0}
+.lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;font-size:15px;margin:8px 0}
+select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15px Nunito,sans-serif;background:#fff;color:var(--ink)}
+.code{font-family:"Lilita One";letter-spacing:4px;color:var(--ink);background:var(--gold);border:3px solid var(--ink);border-radius:10px;padding:0 10px}
+.status{min-height:20px;font-weight:800;font-size:14px;color:var(--red2);margin:6px 0 0}
 </style>
 </head>
 <body>
@@ -66,7 +74,7 @@ h2{font-family:"Lilita One",sans-serif;font-weight:400;font-size:34px;margin:16p
     <h1>CHEF ARENA</h1>
     <p class="sub">Empurre os outros chefs para fora da frigideira. Quem ficar por último vence!</p>
     <button class="btn" id="btnCpu">Jogar contra o computador<small>Você + 7 chefs, todos contra todos</small></button>
-    <button class="btn alt" disabled>Online com amigos<small>Em breve</small></button>
+    <button class="btn alt" id="btnOnline">Online com amigos<small>Até 8 chefs, cada um no seu celular</small></button>
     <div class="how"><b>Como jogar</b><br>📱 Arraste o dedo no lado esquerdo para andar e toque em <b>EMPURRAR</b> para dar um tranco.<br>⌨️ No computador: <b>WASD</b> ou setas para andar e <b>Espaço</b> para empurrar.<br>🔥 Depois de 30 segundos a frigideira começa a encolher!</div>
   </div>
 </div>
@@ -78,6 +86,42 @@ h2{font-family:"Lilita One",sans-serif;font-weight:400;font-size:34px;margin:16p
     <button class="btn med" data-d="medium">Médio<small>Chefs espertos</small></button>
     <button class="btn hard" data-d="hard">Difícil<small>Chefs rápidos e de olho em você</small></button>
     <button class="btn alt" id="btnBack">Voltar</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="online">
+  <div class="card">
+    <h2>Jogar online</h2>
+    <input class="in" id="nameIn" maxlength="10" placeholder="Seu nome" autocomplete="off">
+    <button class="btn" id="btnCreate">Criar sala<small>Você recebe um código para os amigos</small></button>
+    <div class="row"><input class="in" id="codeIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="btn med" id="btnJoin">Entrar</button></div>
+    <p class="status" id="netStatus"></p>
+    <button class="btn alt" id="btnOnBack">Voltar</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="lobby">
+  <div class="card">
+    <h2>Sala <span class="code" id="lobbyCode">----</span></h2>
+    <p class="sub" id="lobbySub">Passe o código para seus amigos entrarem.</p>
+    <button class="btn alt" id="btnInvite">Convidar amigos<small>Envia o link da sala</small></button>
+    <ol class="rank" id="lobbyList"></ol>
+    <div id="hostCtl">
+      <label class="lbl">Completar com bots
+        <select class="in" id="botSel"><option value="none">Sem bots</option><option value="easy">Fáceis</option><option value="medium">Médios</option><option value="hard">Difíceis</option></select></label>
+      <button class="btn" id="btnStartOnline">Começar partida</button>
+    </div>
+    <p class="sub" id="lobbyWait">Aguardando o dono da sala começar…</p>
+    <p class="status" id="lobbyStatus"></p>
+    <button class="btn alt" id="btnLeave">Sair da sala</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="netmsg">
+  <div class="card">
+    <h2>Ops!</h2>
+    <p class="sub" id="netMsgText"></p>
+    <button class="btn" id="btnNetOk">OK</button>
   </div>
 </div>
 
@@ -101,6 +145,7 @@ h2{font-family:"Lilita One",sans-serif;font-weight:400;font-size:34px;margin:16p
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
@@ -274,8 +319,12 @@ function playerInput(){
 
 /* ---------- Jogabilidade ---------- */
 function dash(c){
+  if(mode==='client'){
+    if(c===player&&net&&net.host&&state==='play'&&!c.falling&&net.cd<=0){net.cd=1;net.host.send({t:'dash'});beep(260,.12,'sawtooth',.06,180)}
+    return;
+  }
   if(state!=='play'||paused||c.dashCd>0||c.falling||c.dead||c.stun>0)return;
-  c.dashCd=c.isP?1.0:D.cd*(.85+Math.random()*.3);c.dashT=.32;
+  c.dashCd=(c.isP||c.human)?1.0:D.cd*(.85+Math.random()*.3);c.dashT=.32;
   c.vx+=Math.sin(c.face)*DASH_IMP;c.vz+=Math.cos(c.face)*DASH_IMP;
   if(c.isP)beep(260,.12,'sawtooth',.06,180);
 }
@@ -283,7 +332,7 @@ function chooseTarget(c){
   let best=null,bs=1e9;
   for(const o of standing()){if(o===c)continue;
     const d=Math.hypot(o.x-c.x,o.z-c.z),edge=Math.hypot(o.x,o.z)/platR;
-    const s=d-edge*4+Math.random()*2.2-(o.isP?D.bias*7:0);
+    const s=d-edge*4+Math.random()*2.2-((o.isP||o.human)?D.bias*7:0);
     if(s<bs){bs=s;best=o}}
   c.ai.target=best;c.ai.err=(Math.random()-.5)*2*D.err;
 }
@@ -315,15 +364,19 @@ function aiInput(c,dt){
 }
 function knock(from,to,nx,nz){
   to.vx+=nx*PUSH;to.vz+=nz*PUSH;to.stun=.38;from.dashT=0;from.vx*=.35;from.vz*=.35;
+  if(mode==='host'&&net)net.ev.push([0,chefs.indexOf(from),chefs.indexOf(to)]);
   if(from.isP||to.isP)beep(140,.18,'square',.09,-60);else beep(180,.08,'square',.025,-60);
 }
 function eliminate(c){
   c.falling=true;c.place=standing().length+1;
+  if(mode==='host'&&net)net.ev.push([1,chefs.indexOf(c)]);
   if(c.isP){beep(500,.6,'triangle',.08,-420)}else beep(420,.35,'triangle',.03,-300);
 }
 function update(dt){
   if(state==='play'||state==='count'||state==='menu')time+=dt;
   const active=state==='play'||state==='menu';
+  const online=mode==='host'||mode==='client';
+  if(mode==='client'){clientStep(dt)}else{
   if(active&&time>30&&platR>R_MIN){
     platR=Math.max(R_MIN,platR-.22*dt);const s=platR/R0;pan.scale.set(s,1,s);
     if(platR<R0-2)egg.visible=false;
@@ -333,8 +386,8 @@ function update(dt){
     if(c.dead)continue;
     c.dashCd=Math.max(0,c.dashCd-dt);c.dashT=Math.max(0,c.dashT-dt);c.stun=Math.max(0,c.stun-dt);
     let ix=0,iz=0;
-    if(active&&!c.falling&&c.stun<=0){[ix,iz]=c.isP?playerInput():aiInput(c,dt)}
-    const sp=c.isP?1:D.speed;
+    if(active&&!c.falling&&c.stun<=0){[ix,iz]=c.isP?playerInput():c.human?[c.netIn.x,c.netIn.z]:aiInput(c,dt)}
+    const sp=(c.isP||c.human)?1:D.speed;
     c.vx+=ix*ACC*sp*dt;c.vz+=iz*ACC*sp*dt;
     const dr=Math.exp(-(c.falling?.4:DRAG)*dt);c.vx*=dr;c.vz*=dr;
     c.x+=c.vx*dt;c.z+=c.vz*dt;
@@ -359,11 +412,14 @@ function update(dt){
   const st=standing();
   if(state==='play'){
     $('alive').textContent='👨‍🍳 '+st.length;
-    if(player&&player.falling&&endTimer<0)endTimer=1.6;
+    if(online){
+      if(endTimer<0&&(st.length<=1||!st.some(c=>c.isP||c.human))){if(st.length===1)st[0].place=1;endTimer=1.4}
+    }else if(player&&player.falling&&endTimer<0)endTimer=1.6;
     if(st.length<=1&&endTimer<0){if(st[0])st[0].place=1;endTimer=1.2}
     if(endTimer>0){endTimer-=dt;if(endTimer<=0)showEnd()}
   }
   if(state==='menu'&&st.length<=1){demoReset+=dt;if(demoReset>2.5){demoReset=0;D=DIFF.medium;setup(false)}}
+  }
   // animação
   for(const c of chefs){
     const g=c.m.g;g.position.set(c.x,c.y,c.z);g.rotation.y=c.face;
@@ -393,13 +449,17 @@ function updateCamera(dt){
 /* ---------- UI ---------- */
 let msgT=0;
 function flash(t,small=false,dur=1.4){const m=$('msg');m.textContent=t;m.classList.toggle('small',small);m.style.opacity=1;msgT=dur}
-function show(id){['menu','diff','end','pause'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
+function show(id){['menu','diff','end','pause','online','lobby','netmsg'].forEach(x=>$(x).classList.toggle('hidden',x!==id))}
 function setGameUI(on){['hud','pushBtn'].forEach(x=>$(x).classList.toggle('hidden',!on));
   $('joyHint').classList.toggle('hidden',!on||!('ontouchstart' in window));if(!on){base.classList.add('hidden');joy.id=null}}
 
 function startGame(d){
-  diff=d;D=DIFF[d];setup(true);show(null);setGameUI(true);state='count';paused=false;
-  camera.position.set(player.x*.5,portrait?25:19,player.z*.5+18);
+  leaveNet();mode='cpu';diff=d;D=DIFF[d];setup(true);beginCountdown();
+}
+function beginCountdown(){
+  show(null);setGameUI(true);state='count';paused=false;
+  $('btnRestart').classList.toggle('hidden',mode!=='cpu');
+  if(player)camera.position.set(player.x*.5,portrait?25:19,player.z*.5+18);
   let n=3;flash(n);beep(440,.15,'square',.06);
   const iv=setInterval(()=>{n--;if(state!=='count'){clearInterval(iv);return}
     if(n>0){flash(n);beep(440,.15,'square',.06)}else{flash('JÁ!');beep(880,.3,'square',.07);state='play';time=0;clearInterval(iv)}},800);
@@ -407,21 +467,258 @@ function startGame(d){
 function showEnd(){
   state='end';setGameUI(false);
   const st=standing();if(st.length===1)st[0].place=1;
-  const won=player.place===1;
-  $('endTitle').textContent=won?'🏆 Você venceu!':'💥 Você caiu!';
-  $('endSub').textContent=(won?'Você foi o último chef na frigideira!':`Você ficou em ${player.place}º lugar.`)+' Nível: '+{easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff];
+  const online=mode==='host'||mode==='client';
+  if(mode==='host'&&net)netSendAll({t:'end',pl:chefs.map(c=>c.place)});
+  const won=player.place===1,win=chefs.find(c=>c.place===1);
+  $('endTitle').textContent=won?'🏆 Você venceu!':(online&&win?'🏆 '+(win.human?win.name:'Chef '+win.name)+' venceu!':'💥 Você caiu!');
+  $('endSub').textContent=(won?'Você foi o último chef na frigideira!':(player.place?`Você ficou em ${player.place}º lugar.`:'Você caiu!'))+
+    (online?(mode==='client'?' Aguardando o dono da sala começar outra…':''):' Nível: '+{easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff]);
   const known=chefs.filter(c=>c.place).sort((a,b)=>a.place-b.place);
   const unknown=chefs.filter(c=>!c.place);
-  $('rank').innerHTML=[...known,...unknown].map(c=>`<li class="${c.isP?'me':''}"><b style="width:28px">${c.place?c.place+'º':'–'}</b><span class="dot" style="background:#${c.col.toString(16).padStart(6,'0')}"></span>${c.isP?'Você':'Chef '+c.name}${c.place===1?' 👑':''}</li>`).join('');
+  $('rank').innerHTML=[...known,...unknown].map(c=>`<li class="${c.isP?'me':''}"><b style="width:28px">${c.place?c.place+'º':'–'}</b><span class="dot" style="background:#${c.col.toString(16).padStart(6,'0')}"></span>${c.isP?'Você':(c.human?esc(c.name):'Chef '+c.name)}${c.place===1?' 👑':''}</li>`).join('');
+  $('btnAgain').classList.toggle('hidden',mode==='client');
+  $('btnAgain').textContent=mode==='host'?'Nova partida':'Jogar de novo';
+  $('btnMenu').textContent=online?'Sair da sala':'Menu inicial';
   show('end');if(won){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,'square',.06),i*130))}
 }
-function toMenu(){state='menu';mode='demo';D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
-function togglePause(){paused=!paused;show(paused?'pause':null)}
+function toMenu(){leaveNet();state='menu';mode='demo';D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
+function togglePause(){
+  if(mode==='host'||mode==='client'){show($('pause').classList.contains('hidden')?'pause':null);return} // online não pausa
+  paused=!paused;show(paused?'pause':null)}
+
+/* ---------- Online ---------- */
+const NET_PREFIX='chefarena-v1-';
+const LOCAL_NET=/[?&]localnet=1/.test(location.search);
+let net=null;
+function esc(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function cleanName(n){return String(n||'').replace(/[<>]/g,'').trim().slice(0,10)||'Chef'}
+function r2(v){return Math.round(v*100)/100}
+function getName(){
+  let n=cleanName($('nameIn').value);if(!$('nameIn').value.trim())n='Chef '+(10+Math.random()*90|0);
+  $('nameIn').value=n;try{localStorage.setItem('chefName',n)}catch(e){}return n}
+try{$('nameIn').value=localStorage.getItem('chefName')||''}catch(e){}
+
+function wrapConn(onSend,onCloseFn){const w={_d:null,_c:null,send:onSend,close:onCloseFn,onData(f){w._d=f},onClose(f){w._c=f}};return w}
+function peerTransport(){
+  let peer=null;
+  function wrap(c){
+    const w=wrapConn(o=>{try{if(c.open)c.send(o)}catch(e){}},()=>{try{c.close()}catch(e){}});
+    let closed=false;const fire=()=>{if(!closed){closed=true;w._c&&w._c()}};
+    c.on('data',d=>w._d&&w._d(d));c.on('close',fire);c.on('error',fire);
+    // detecta queda silenciosa do canal
+    const iv=setInterval(()=>{if(closed){clearInterval(iv);return}const pc=c.peerConnection;
+      if(pc&&['failed','closed'].includes(pc.iceConnectionState)){clearInterval(iv);fire()}},2000);
+    return w}
+  return{
+    host(code,h){
+      if(typeof Peer==='undefined'){h.onError('nolib');return}
+      peer=new Peer(NET_PREFIX+code);
+      peer.on('open',()=>h.onReady());
+      peer.on('connection',c=>c.on('open',()=>h.onConn(wrap(c))));
+      peer.on('error',e=>h.onError(e.type));
+      peer.on('disconnected',()=>{try{peer&&!peer.destroyed&&peer.reconnect()}catch(e){}});
+    },
+    join(code,h){
+      if(typeof Peer==='undefined'){h.onError('nolib');return}
+      peer=new Peer();
+      const t=setTimeout(()=>h.onError('timeout'),15000);
+      peer.on('open',()=>{const c=peer.connect(NET_PREFIX+code,{reliable:true});c.on('open',()=>{clearTimeout(t);h.onOpen(wrap(c))})});
+      peer.on('error',e=>{if(e.type==='peer-unavailable')clearTimeout(t);h.onError(e.type)});
+    },
+    destroy(){try{peer&&peer.destroy()}catch(e){}peer=null}
+  };
+}
+// transporte local (duas abas do mesmo navegador) só para testes: ?localnet=1
+function localTransport(){
+  let bc=null,me='p'+Math.random().toString(36).slice(2,8);const conns={};
+  function mk(id){const w=wrapConn(o=>bc&&bc.postMessage({from:me,to:id,k:'d',d:o}),()=>bc&&bc.postMessage({from:me,to:id,k:'x'}));conns[id]=w;return w}
+  function recv(m){if(m.to!==me)return;const c=conns[m.from];
+    if(m.k==='d'&&c&&c._d)c._d(m.d);else if(m.k==='x'&&c){delete conns[m.from];c._c&&c._c()}}
+  return{
+    host(code,h){me='host';bc=new BroadcastChannel('ca-'+code);
+      bc.onmessage=({data:m})=>{if(m.to!==me)return;if(m.k==='hi'){const w=mk(m.from);bc.postMessage({from:me,to:m.from,k:'ok'});h.onConn(w)}else recv(m)};
+      setTimeout(()=>h.onReady(),30)},
+    join(code,h){bc=new BroadcastChannel('ca-'+code);const t=setTimeout(()=>h.onError('peer-unavailable'),1500);
+      bc.onmessage=({data:m})=>{if(m.to!==me)return;if(m.k==='ok'){clearTimeout(t);h.onOpen(mk('host'))}else recv(m)};
+      bc.postMessage({from:me,to:'host',k:'hi'})},
+    destroy(){if(bc){Object.keys(conns).forEach(k=>bc.postMessage({from:me,to:k,k:'x'}));bc.close()}bc=null}
+  };
+}
+function makeTransport(){return LOCAL_NET?localTransport():peerTransport()}
+function leaveNet(){if(!net)return;const n=net;net=null;try{n.tr.destroy()}catch(e){}}
+function netFail(msg){toMenu();$('netMsgText').textContent=msg;show('netmsg')}
+function netSendAll(m){if(net&&net.roster)net.roster.forEach(r=>r.conn&&r.conn.send(m))}
+function randCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<4;i++)s+=A[Math.random()*A.length|0];return s}
+
+/* --- dono da sala --- */
+function createRoom(tries=0){
+  const name=getName();leaveNet();
+  const code=randCode(),tr=makeTransport();
+  net={role:'host',tr,code,roster:[{name,conn:null}],bots:'medium',started:false,ready:false,ev:[]};
+  $('netStatus').textContent='Criando sala…';
+  tr.host(code,{
+    onReady(){if(!net||net.tr!==tr)return;net.ready=true;$('netStatus').textContent='';toLobby()},
+    onConn(conn){if(!net||net.tr!==tr){conn.close();return}conn.onData(m=>hostMsg(conn,m));conn.onClose(()=>hostDrop(conn))},
+    onError(type){if(!net||net.tr!==tr)return;
+      if(type==='unavailable-id'&&tries<4){createRoom(tries+1);return}
+      if(net.ready)return; // a sala já existe; conexões abertas continuam funcionando
+      netFail(type==='nolib'?'Não foi possível carregar o modo online. Verifique a internet.':'Não foi possível criar a sala. Verifique a internet e tente de novo.')}
+  });
+}
+function toLobby(){
+  if(!net)return;
+  if(net.role==='host')net.started=false;
+  mode='demo';state='menu';D=DIFF.medium;setup(false);setGameUI(false);
+  if(net.role==='host')lobbyBroadcast();
+  show('lobby');
+}
+function lobbyBroadcast(){
+  const names=net.roster.map(r=>r.name);
+  renderLobby(names,0,true,net.bots);
+  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'lobby',code:net.code,names,you:i,bots:net.bots}));
+}
+function hostMsg(conn,m){
+  if(!net||net.role!=='host'||!m)return;
+  if(m.t==='hello'){
+    if(net.started){conn.send({t:'deny',why:'A partida já começou. Espere ela acabar e tente de novo.'});setTimeout(()=>conn.close(),500);return}
+    if(net.roster.length>=8){conn.send({t:'deny',why:'A sala está cheia (8 chefs).'});setTimeout(()=>conn.close(),500);return}
+    if(net.roster.some(r=>r.conn===conn))return;
+    let name=cleanName(m.name);const used=net.roster.map(r=>r.name);let k=2;const base=name.slice(0,8);
+    while(used.includes(name))name=base+' '+(k++);
+    net.roster.push({name,conn});beep(700,.08);lobbyBroadcast();return}
+  const c=chefs.find(c=>c.net===conn);if(!c)return;
+  if(m.t==='in'){let x=+m.x||0,z=+m.z||0;const l=Math.hypot(x,z);if(l>1){x/=l;z/=l}c.netIn.x=x;c.netIn.z=z}
+  else if(m.t==='dash')dash(c);
+}
+function hostDrop(conn){
+  if(!net||net.role!=='host')return;
+  const i=net.roster.findIndex(r=>r.conn===conn);if(i<0)return;
+  const name=net.roster[i].name;net.roster.splice(i,1);
+  const c=chefs.find(c=>c.net===conn);if(c){c.net=null;c.netIn={x:0,z:0}}
+  if(!net.started)lobbyBroadcast();else flash(name+' saiu',true);
+}
+function hostStart(){
+  if(!net||net.role!=='host')return;
+  const slots=net.roster.map(r=>({name:r.name,human:true,conn:r.conn}));
+  if(net.bots!=='none')for(let i=slots.length;i<8;i++)slots.push({name:BOT_NAMES[i],human:false});
+  if(slots.length<2)return;
+  net.started=true;net.ev=[];mode='host';D=DIFF[net.bots==='none'?'medium':net.bots];
+  setupOnline(slots,0);
+  const info=slots.map(s=>({n:s.name,h:s.human}));
+  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'start',slots:info,you:i}));
+  beep(700,.08);beginCountdown();
+}
+let snapT=0;
+function hostTick(dt){
+  if(mode!=='host'||!net)return;
+  snapT-=dt;if(snapT>0)return;snapT=.05;
+  if(state!=='count'&&state!=='play')return;
+  netSendAll({t:'s',r:r2(platR),c:chefs.map(c=>[r2(c.x),r2(c.z),r2(c.y),r2(c.face),(c.falling?1:0)|(c.dead?2:0)|(c.dashT>0?4:0)|(c.stun>0?8:0)]),e:net.ev});
+  net.ev=[];
+}
+// mantém a partida andando se o dono da sala trocar de aba por um instante
+setInterval(()=>{if(document.hidden&&mode==='host'&&!paused){update(.05);hostTick(.05)}},50);
+
+/* --- convidado --- */
+function joinRoom(){
+  const name=getName();
+  const code=$('codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g,'');$('codeIn').value=code;
+  if(code.length!==4){$('netStatus').textContent='Digite o código de 4 letras da sala.';return}
+  leaveNet();
+  const tr=makeTransport();let done=false;
+  net={role:'client',tr,code,host:null,cd:0,inT:0,lx:0,lz:0};
+  $('netStatus').textContent='Entrando na sala '+code+'…';
+  tr.join(code,{
+    onOpen(conn){if(!net||net.tr!==tr){conn.close();return}done=true;net.host=conn;
+      conn.onData(clientMsg);
+      conn.onClose(()=>{if(net&&net.tr===tr)netFail('O dono da sala saiu ou a conexão caiu.')});
+      conn.send({t:'hello',name})},
+    onError(type){if(!net||net.tr!==tr||done)return;
+      netFail(type==='peer-unavailable'||type==='timeout'?'Sala '+code+' não encontrada. Confira o código e se o dono da sala está com o jogo aberto.':
+        type==='nolib'?'Não foi possível carregar o modo online. Verifique a internet.':'Não foi possível conectar. Verifique a internet e tente de novo.')}
+  });
+}
+function clientMsg(m){
+  if(!net||!m)return;
+  if(m.t==='deny'){netFail(m.why);return}
+  if(m.t==='lobby'){
+    if(mode==='client'||$('lobby').classList.contains('hidden'))toLobby();
+    renderLobby(m.names,m.you,false,m.bots);show('lobby');return}
+  if(m.t==='start'){mode='client';net.cd=0;setupOnline(m.slots.map(s=>({name:s.n,human:s.h})),m.you);beginCountdown();return}
+  if(mode!=='client')return;
+  if(m.t==='s')clientSnap(m);
+  else if(m.t==='end'){m.pl.forEach((p,i)=>{if(chefs[i])chefs[i].place=p});state='end';setGameUI(false);showEnd()}
+}
+function clientSnap(m){
+  platR=m.r;const s=platR/R0;pan.scale.set(s,1,s);if(platR<R0-2)egg.visible=false;
+  if(platR<R0-.05&&!shrinkMsg&&state==='play'){shrinkMsg=true;flash('🔥 A frigideira está encolhendo!',true)}
+  m.c.forEach((a,i)=>{const c=chefs[i];if(!c)return;
+    c.tx=a[0];c.tz=a[1];c.ty=a[2];c.tf=a[3];
+    const f=a[4],was=c.falling;c.falling=!!(f&1);c.dead=!!(f&2);c.dashT=f&4?.1:0;c.stun=f&8?.1:0;
+    if(c.dead)c.m.g.visible=false;
+    if(c.falling&&!was)c===player?beep(500,.6,'triangle',.08,-420):beep(420,.35,'triangle',.03,-300)});
+  (m.e||[]).forEach(ev=>{if(ev[0]===0){const mine=chefs[ev[1]]===player||chefs[ev[2]]===player;mine?beep(140,.18,'square',.09,-60):beep(180,.08,'square',.025,-60)}});
+}
+function clientStep(dt){
+  const k=Math.min(1,dt*14),idt=1/Math.max(dt,1e-3);
+  for(const c of chefs){const px=c.x,pz=c.z;
+    c.x+=(c.tx-c.x)*k;c.z+=(c.tz-c.z)*k;c.y+=(c.ty-c.y)*k;c.face=lerpA(c.face,c.tf,k);
+    c.vx=(c.x-px)*idt;c.vz=(c.z-pz)*idt}
+  if(!net||!net.host||(state!=='play'&&state!=='count'))return;
+  $('alive').textContent='👨‍🍳 '+standing().length;
+  net.cd=Math.max(0,net.cd-dt);if(player)player.dashCd=net.cd;
+  const [x,z]=(player&&!player.falling&&state==='play')?playerInput():[0,0];
+  net.inT-=dt;
+  if(net.inT<=0&&(Math.abs(x-net.lx)+Math.abs(z-net.lz)>.04||net.inT<-.3)){
+    net.inT=.05;net.lx=x;net.lz=z;net.host.send({t:'in',x:r2(x),z:r2(z)})}
+}
+
+/* --- comum --- */
+function setupOnline(slots,myIdx){
+  clearChefs();platR=R0;pan.scale.set(1,1,1);egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;player=null;
+  const n=slots.length;
+  slots.forEach((s,i)=>{
+    const isP=i===myIdx,a=i/n*Math.PI*2+Math.PI/2,r=7;
+    const c={x:Math.cos(a)*r,z:Math.sin(a)*r,vx:0,vz:0,y:0,vy:0,face:0,falling:false,dead:false,place:0,
+      dashCd:.5,dashT:0,stun:0,isP,human:s.human,name:s.name,col:COLORS[i],net:s.conn||null,netIn:{x:0,z:0},
+      ai:{t:Math.random()*.5,target:null,err:0},m:makeChef(COLORS[i],SKINS[i],isP?'Você':(s.human?s.name:s.name),isP,i%3===0)};
+    c.face=Math.atan2(-c.x,-c.z);c.tx=c.x;c.tz=c.z;c.ty=0;c.tf=c.face;
+    chefs.push(c);if(isP)player=c;
+  });
+}
+function renderLobby(names,you,isHost,bots){
+  $('lobbyCode').textContent=net?net.code:'';
+  const nb=bots==='none'?0:Math.max(0,8-names.length);
+  $('lobbyList').innerHTML=names.map((n,i)=>`<li class="${i===you?'me':''}"><span class="dot" style="background:#${COLORS[i].toString(16).padStart(6,'0')}"></span>${esc(n)}${i===0?' 👑':''}${i===you?' (você)':''}</li>`).join('');
+  $('lobbySub').textContent=names.length<2?'Passe o código para seus amigos entrarem.':`${names.length} jogadores na sala`+(nb?` + ${nb} bots`:'');
+  $('hostCtl').classList.toggle('hidden',!isHost);$('lobbyWait').classList.toggle('hidden',isHost);
+  if(isHost){$('botSel').value=bots;$('btnStartOnline').disabled=names.length+nb<2;
+    $('lobbyStatus').textContent=names.length+nb<2?'Espere um amigo entrar ou ligue os bots.':''}
+  else $('lobbyStatus').textContent='';
+}
+function invite(){
+  if(!net)return;const url=location.origin+'/?sala='+net.code,txt='Bora jogar Chef Arena! Entra na minha sala: '+net.code;
+  const done=()=>{$('lobbyStatus').textContent='Link copiado! Cole no WhatsApp para seus amigos.'};
+  if(navigator.share)navigator.share({title:'Chef Arena',text:txt,url}).catch(()=>{});
+  else if(navigator.clipboard)navigator.clipboard.writeText(txt+' '+url).then(done,()=>{$('lobbyStatus').textContent=url});
+  else $('lobbyStatus').textContent=url;
+}
+
+$('btnOnline').onclick=()=>{beep(600,.08);$('netStatus').textContent='';show('online')};
+$('btnOnBack').onclick=()=>{leaveNet();show('menu')};
+$('btnCreate').onclick=()=>{beep(700,.08);createRoom()};
+$('btnJoin').onclick=()=>{beep(700,.08);joinRoom()};
+$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom()});
+$('btnLeave').onclick=toMenu;
+$('btnInvite').onclick=invite;
+$('botSel').onchange=()=>{if(net&&net.role==='host'){net.bots=$('botSel').value;lobbyBroadcast()}};
+$('btnStartOnline').onclick=hostStart;
+$('btnNetOk').onclick=()=>show('menu');
 
 $('btnCpu').onclick=()=>{beep(600,.08);show('diff')};
 $('btnBack').onclick=()=>show('menu');
 document.querySelectorAll('#diff [data-d]').forEach(b=>b.onclick=()=>{beep(700,.08);startGame(b.dataset.d)});
-$('btnAgain').onclick=()=>startGame(diff);
+$('btnAgain').onclick=()=>{if(mode==='host')toLobby();else startGame(diff)};
 $('btnMenu').onclick=toMenu;
 $('pauseBtn').onclick=()=>{if(state==='play'||state==='count')togglePause()};
 $('pauseBtn').addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();if(state==='play'||state==='count')togglePause()},{passive:false});
@@ -431,15 +728,17 @@ $('btnQuit').onclick=toMenu;
 
 /* ---------- Loop ---------- */
 toMenu();
+{const sala=new URLSearchParams(location.search).get('sala');
+ if(sala){$('codeIn').value=sala.toUpperCase().slice(0,4);show('online');$('netStatus').textContent='Digite seu nome e toque em Entrar.'}}
 let last=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!paused){update(dt);updateCamera(dt)}
+  if(!paused){update(dt);updateCamera(dt);hostTick(dt)}
   if(msgT>0){msgT-=dt;if(msgT<=0)$('msg').style.opacity=0}
   renderer.render(scene,camera);requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-window.__game={get state(){return state},get chefs(){return chefs},startGame};
+window.__game={get state(){return state},get mode(){return mode},get chefs(){return chefs},get net(){return net},get player(){return player},startGame};
 })();
 </script>
 </body>

@@ -12,7 +12,8 @@
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#2a1b14}iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:block}</style>
 </head>
 <body>
-<iframe src="/jogo.html" title="Chef Arena" allow="fullscreen; autoplay" allowfullscreen></iframe>
+<iframe id="g" title="Chef Arena" allow="fullscreen; autoplay; web-share; clipboard-write" allowfullscreen></iframe>
+<script>document.getElementById("g").src="/jogo.html"+location.search</script>
 <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))}</script>
 </body>
 </html>
