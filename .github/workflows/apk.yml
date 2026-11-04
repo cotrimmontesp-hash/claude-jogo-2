@@ -19,7 +19,7 @@ jobs:
       - name: Baixar o jogo da Vercel
         run: |
           mkdir -p www
-          curl -fsSL https://claude-jogo-2.vercel.app/ -o www/index.html
+          curl -fsSL https://claude-jogo-2.vercel.app/jogo.html -o www/index.html
           grep -q "Chef Arena" www/index.html
       - name: Preparar app
         run: |
