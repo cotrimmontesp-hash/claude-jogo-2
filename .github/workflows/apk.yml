@@ -16,12 +16,21 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Baixar o jogo da Vercel
+      - uses: actions/checkout@v4
+        with:
+          path: repo
+      - name: Baixar o jogo da Vercel (espera a versão deste commit ser publicada)
         run: |
           mkdir -p www
-          curl -fsSL https://claude-jogo-2.vercel.app/jogo.html -o www/index.html
-          grep -q "Chef Arena" www/index.html
-          grep -q "btnCreate" www/index.html && echo "modo online presente"
+          want=$(sha1sum repo/site/jogo.html | cut -d' ' -f1)
+          for i in $(seq 1 60); do
+            curl -fsSL "https://claude-jogo-2.vercel.app/jogo.html?v=$RANDOM" -o www/index.html || true
+            got=$(sha1sum www/index.html | cut -d' ' -f1)
+            [ "$got" = "$want" ] && echo "versão publicada confere" && break
+            echo "aguardando publicação ($i)"; sleep 10
+          done
+          [ "$got" = "$want" ] || cp repo/site/jogo.html www/index.html
+          grep -q "btnCreate" www/index.html
       - name: Preparar app
         run: |
           npm init -y

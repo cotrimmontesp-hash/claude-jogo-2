@@ -54,6 +54,10 @@ input.in{display:block;width:100%;border:3px solid var(--ink);border-radius:12px
 .lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;font-size:15px;margin:8px 0}
 select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15px Nunito,sans-serif;background:#fff;color:var(--ink)}
 .code{font-family:"Lilita One";letter-spacing:4px;color:var(--ink);background:var(--gold);border:3px solid var(--ink);border-radius:10px;padding:0 10px}
+.seg{display:flex;gap:6px;margin:6px 0 10px}.seg button{flex:1;border:3px solid var(--ink);border-radius:10px;padding:8px 0;font:400 17px "Lilita One",sans-serif;background:#fff;color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--gold)}
+.tag{font-size:11px;font-weight:800;color:#fff;border-radius:6px;padding:1px 6px;margin-left:auto;cursor:pointer}
+.tag.t0{background:#e2402f}.tag.t1{background:#3a86ff}
 .status{min-height:20px;font-weight:800;font-size:14px;color:var(--red2);margin:6px 0 0}
 </style>
 </head>
@@ -81,7 +85,10 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
 
 <div class="overlay hidden" id="diff">
   <div class="card">
-    <h2>Escolha o nível</h2>
+    <h2>Modo de jogo</h2>
+    <div class="seg" id="cpuMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
+    <p class="sub" id="cpuModeSub" style="margin:0 0 6px">Você + 7 chefs, todos contra todos</p>
+    <h2 style="margin-top:6px">Escolha o nível</h2>
     <button class="btn easy" data-d="easy">Fácil<small>Chefs distraídos e lentos</small></button>
     <button class="btn med" data-d="medium">Médio<small>Chefs espertos</small></button>
     <button class="btn hard" data-d="hard">Difícil<small>Chefs rápidos e de olho em você</small></button>
@@ -107,6 +114,7 @@ select.in{border:3px solid var(--ink);border-radius:10px;padding:8px;font:800 15
     <button class="btn alt" id="btnInvite">Convidar amigos<small>Envia o link da sala</small></button>
     <ol class="rank" id="lobbyList"></ol>
     <div id="hostCtl">
+      <div class="seg" id="onMode"><button data-t="0" class="on">Todos</button><button data-t="1">1v1</button><button data-t="2">2v2</button><button data-t="3">3v3</button></div>
       <label class="lbl">Completar com bots
         <select class="in" id="botSel"><option value="none">Sem bots</option><option value="easy">Fáceis</option><option value="medium">Médios</option><option value="hard">Difíceis</option></select></label>
       <button class="btn" id="btnStartOnline">Começar partida</button>
@@ -208,6 +216,8 @@ const COLORS=[0xffc93c,0x3a86ff,0x2ec4b6,0xff5d8f,0x8338ec,0x06d6a0,0xff8c1a,0x8
 const SKINS=[0xf1c27d,0xe0ac69,0xc68642,0x8d5524,0xffdbac,0xd8a27a,0xa86b3c,0xf5d0a9];
 const NAMES=['Você','Pierre','Luigi','Ana','Kenji','Rosa','Tião','Mei'];
 const BOT_NAMES=['Pierre','Luigi','Ana','Kenji','Rosa','Tião','Mei','Gordon'];
+const TEAM_COL=[0xe2402f,0x3a86ff],TEAM_NAMES=['Vermelho','Azul'];
+let teamSize=0,cpuTeam=0,winTeam=-1;
 
 function std(c,r=.7){return new THREE.MeshStandardMaterial({color:c,roughness:r})}
 function add(g,geo,mat,x,y,z){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;g.add(m);return m}
@@ -218,7 +228,7 @@ function label(text,color){
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false,transparent:true}));
   s.scale.set(2.6,.73,1);s.position.y=3.05;s.renderOrder=10;return s;
 }
-function makeChef(col,skin,name,isPlayer,mustache){
+function makeChef(col,skin,name,isPlayer,mustache,team=-1){
   const g=new THREE.Group();
   const W=std(0xf8f6f0),C=std(col,.6),S=std(skin,.8),D=std(0x222222,.5),B=std(0x4a2a14,.8);
   add(g,new THREE.CylinderGeometry(.42,.54,.95,18),W,0,.66,0);               // dólmã
@@ -239,7 +249,8 @@ function makeChef(col,skin,name,isPlayer,mustache){
     add(pv,new THREE.SphereGeometry(.13,10,8),S,0,-.52,0);pv.rotation.z=s*.35;return pv});
   add(g,new THREE.SphereGeometry(.17,10,8),D,-.2,.12,.05).scale.set(1,.6,1.4);
   add(g,new THREE.SphereGeometry(.17,10,8),D,.2,.12,.05).scale.set(1,.6,1.4);
-  g.add(label(name,isPlayer?'#ffc93c':'#ffffff'));
+  g.add(label(name,isPlayer?'#ffc93c':team===0?'#ff9a8a':team===1?'#9cc4ff':'#ffffff'));
+  if(team>=0){const tr=new THREE.Mesh(new THREE.RingGeometry(.62,.74,32),new THREE.MeshBasicMaterial({color:TEAM_COL[team],transparent:true,opacity:.85}));tr.rotation.x=-Math.PI/2;tr.position.y=.03;g.add(tr)}
   if(isPlayer){const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.9,32),new THREE.MeshBasicMaterial({color:0xffc93c,transparent:true,opacity:.9}));ring.rotation.x=-Math.PI/2;ring.position.y=.04;g.add(ring)}
   scene.add(g);return {g,arms};
 }
@@ -266,6 +277,11 @@ function lerpA(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Ma
 
 function clearChefs(){chefs.forEach(c=>scene.remove(c.m.g));chefs=[];}
 function setup(withPlayer){
+  if(withPlayer&&teamSize>0){
+    const slots=[{name:'Você',human:false,team:0}];
+    for(let i=1;i<teamSize;i++)slots.push({name:BOT_NAMES[i],human:false,team:0});
+    for(let i=0;i<teamSize;i++)slots.push({name:BOT_NAMES[4+i],human:false,team:1});
+    setupOnline(slots,0);return}
   clearChefs();platR=R0;pan.scale.set(1,1,1);egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;
   const order=[...Array(8).keys()].sort(()=>Math.random()-.5);
   for(let i=0;i<8;i++){
@@ -330,7 +346,7 @@ function dash(c){
 }
 function chooseTarget(c){
   let best=null,bs=1e9;
-  for(const o of standing()){if(o===c)continue;
+  for(const o of standing()){if(o===c||(o.team>=0&&o.team===c.team))continue;
     const d=Math.hypot(o.x-c.x,o.z-c.z),edge=Math.hypot(o.x,o.z)/platR;
     const s=d-edge*4+Math.random()*2.2-((o.isP||o.human)?D.bias*7:0);
     if(s<bs){bs=s;best=o}}
@@ -402,7 +418,9 @@ function update(dt){
       const nx=dx/d,nz=dz/d,ov=(RAD*2-d)/2;a.x-=nx*ov;a.z-=nz*ov;b.x+=nx*ov;b.z+=nz*ov;
       const vn=(a.vx-b.vx)*nx+(a.vz-b.vz)*nz;
       if(vn>0){const jv=vn*.8;a.vx-=nx*jv;a.vz-=nz*jv;b.vx+=nx*jv;b.vz+=nz*jv}
-      if(a.dashT>0&&Math.sin(a.face)*nx+Math.cos(a.face)*nz>.3)knock(a,b,nx,nz);
+      const mates=a.team>=0&&a.team===b.team;
+      if(mates){}
+      else if(a.dashT>0&&Math.sin(a.face)*nx+Math.cos(a.face)*nz>.3)knock(a,b,nx,nz);
       else if(b.dashT>0&&-(Math.sin(b.face)*nx+Math.cos(b.face)*nz)>.3)knock(b,a,-nx,-nz);
     }
   }
@@ -412,10 +430,13 @@ function update(dt){
   const st=standing();
   if(state==='play'){
     $('alive').textContent='👨‍🍳 '+st.length;
-    if(online){
+    if(teamSize>0){
+      const ts=new Set(st.map(c=>c.team));
+      if(endTimer<0&&ts.size<=1){winTeam=st.length?st[0].team:-1;endTimer=1.4}
+    }else if(online){
       if(endTimer<0&&(st.length<=1||!st.some(c=>c.isP||c.human))){if(st.length===1)st[0].place=1;endTimer=1.4}
     }else if(player&&player.falling&&endTimer<0)endTimer=1.6;
-    if(st.length<=1&&endTimer<0){if(st[0])st[0].place=1;endTimer=1.2}
+    if(teamSize===0&&st.length<=1&&endTimer<0){if(st[0])st[0].place=1;endTimer=1.2}
     if(endTimer>0){endTimer-=dt;if(endTimer<=0)showEnd()}
   }
   if(state==='menu'&&st.length<=1){demoReset+=dt;if(demoReset>2.5){demoReset=0;D=DIFF.medium;setup(false)}}
@@ -439,7 +460,7 @@ const camT=new THREE.Vector3();
 function updateCamera(dt){
   let tx=0,tz=0,dist=portrait?25:21,height=portrait?25:19;
   if(state==='menu'){const a=time*.15;camera.position.set(Math.sin(a)*24,17,Math.cos(a)*24);camera.lookAt(0,0,0);return}
-  const focus=player&&!player.falling?player:standing()[0];
+  const focus=player&&!player.falling?player:(standing().find(c=>player&&c.team>=0&&c.team===player.team)||standing()[0]);
   if(focus){tx=focus.x*.5;tz=focus.z*.5}
   camT.set(tx,height,tz+dist*.72);
   camera.position.lerp(camT,Math.min(1,dt*3));
@@ -454,7 +475,7 @@ function setGameUI(on){['hud','pushBtn'].forEach(x=>$(x).classList.toggle('hidde
   $('joyHint').classList.toggle('hidden',!on||!('ontouchstart' in window));if(!on){base.classList.add('hidden');joy.id=null}}
 
 function startGame(d){
-  leaveNet();mode='cpu';diff=d;D=DIFF[d];setup(true);beginCountdown();
+  leaveNet();mode='cpu';teamSize=cpuTeam;winTeam=-1;diff=d;D=DIFF[d];setup(true);beginCountdown();
 }
 function beginCountdown(){
   show(null);setGameUI(true);state='count';paused=false;
@@ -466,22 +487,32 @@ function beginCountdown(){
 }
 function showEnd(){
   state='end';setGameUI(false);
-  const st=standing();if(st.length===1)st[0].place=1;
+  const st=standing();if(teamSize===0&&st.length===1)st[0].place=1;
   const online=mode==='host'||mode==='client';
-  if(mode==='host'&&net)netSendAll({t:'end',pl:chefs.map(c=>c.place)});
-  const won=player.place===1,win=chefs.find(c=>c.place===1);
-  $('endTitle').textContent=won?'🏆 Você venceu!':(online&&win?'🏆 '+(win.human?win.name:'Chef '+win.name)+' venceu!':'💥 Você caiu!');
-  $('endSub').textContent=(won?'Você foi o último chef na frigideira!':(player.place?`Você ficou em ${player.place}º lugar.`:'Você caiu!'))+
-    (online?(mode==='client'?' Aguardando o dono da sala começar outra…':''):' Nível: '+{easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff]);
-  const known=chefs.filter(c=>c.place).sort((a,b)=>a.place-b.place);
-  const unknown=chefs.filter(c=>!c.place);
-  $('rank').innerHTML=[...known,...unknown].map(c=>`<li class="${c.isP?'me':''}"><b style="width:28px">${c.place?c.place+'º':'–'}</b><span class="dot" style="background:#${c.col.toString(16).padStart(6,'0')}"></span>${c.isP?'Você':(c.human?esc(c.name):'Chef '+c.name)}${c.place===1?' 👑':''}</li>`).join('');
+  if(mode==='host'&&net)netSendAll({t:'end',pl:chefs.map(c=>c.place),w:winTeam});
+  const who=c=>c.isP?'Você':(c.human?esc(c.name):'Chef '+c.name);
+  const dot=c=>`<span class="dot" style="background:#${c.col.toString(16).padStart(6,'0')}"></span>`;
+  const tail=online?(mode==='client'?' Aguardando o dono da sala começar outra…':''):' Nível: '+{easy:'Fácil',medium:'Médio',hard:'Difícil'}[diff];
+  let won;
+  if(teamSize>0){
+    won=winTeam>=0&&player.team===winTeam;
+    $('endTitle').textContent=winTeam<0?'🤝 Empate!':won?'🏆 Seu time venceu!':'💥 Seu time perdeu!';
+    $('endSub').textContent=(winTeam<0?'Os dois times caíram.':'Time '+TEAM_NAMES[winTeam]+' venceu o '+teamSize+'v'+teamSize+'.')+tail;
+    const order=[...chefs].sort((a,b)=>(b.team===winTeam)-(a.team===winTeam)||a.team-b.team);
+    $('rank').innerHTML=order.map(c=>`<li class="${c.isP?'me':''}">${dot(c)}${who(c)}${c.team===winTeam?' 👑':''}<span class="tag t${c.team}" style="cursor:default">${c.falling||c.dead?'caiu':'de pé'}</span></li>`).join('');
+  }else{
+    won=player.place===1;const win=chefs.find(c=>c.place===1);
+    $('endTitle').textContent=won?'🏆 Você venceu!':(online&&win?'🏆 '+(win.human?win.name:'Chef '+win.name)+' venceu!':'💥 Você caiu!');
+    $('endSub').textContent=(won?'Você foi o último chef na frigideira!':(player.place?`Você ficou em ${player.place}º lugar.`:'Você caiu!'))+tail;
+    const known=chefs.filter(c=>c.place).sort((a,b)=>a.place-b.place),unknown=chefs.filter(c=>!c.place);
+    $('rank').innerHTML=[...known,...unknown].map(c=>`<li class="${c.isP?'me':''}"><b style="width:28px">${c.place?c.place+'º':'–'}</b>${dot(c)}${who(c)}${c.place===1?' 👑':''}</li>`).join('');
+  }
   $('btnAgain').classList.toggle('hidden',mode==='client');
   $('btnAgain').textContent=mode==='host'?'Nova partida':'Jogar de novo';
   $('btnMenu').textContent=online?'Sair da sala':'Menu inicial';
   show('end');if(won){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,'square',.06),i*130))}
 }
-function toMenu(){leaveNet();state='menu';mode='demo';D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
+function toMenu(){leaveNet();state='menu';mode='demo';teamSize=0;D=DIFF.medium;setup(false);setGameUI(false);show('menu')}
 function togglePause(){
   if(mode==='host'||mode==='client'){show($('pause').classList.contains('hidden')?'pause':null);return} // online não pausa
   paused=!paused;show(paused?'pause':null)}
@@ -554,7 +585,7 @@ function randCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let 
 function createRoom(tries=0){
   const name=getName();leaveNet();
   const code=randCode(),tr=makeTransport();
-  net={role:'host',tr,code,roster:[{name,conn:null}],bots:'medium',started:false,ready:false,ev:[]};
+  net={role:'host',tr,code,roster:[{name,conn:null,team:0}],bots:'medium',teamSize:0,started:false,ready:false,ev:[]};
   $('netStatus').textContent='Criando sala…';
   tr.host(code,{
     onReady(){if(!net||net.tr!==tr)return;net.ready=true;$('netStatus').textContent='';toLobby()},
@@ -572,10 +603,23 @@ function toLobby(){
   if(net.role==='host')lobbyBroadcast();
   show('lobby');
 }
+function balanceTeams(){
+  if(!net.teamSize)return;
+  net.roster.forEach((r,i)=>r.team=i%2);
+}
+function teamCheck(){ // devolve [pode começar, mensagem]
+  const R=net.roster,ts=net.teamSize,bots=net.bots!=='none';
+  if(!ts){const nb=bots?Math.max(0,8-R.length):0;return R.length+nb<2?[false,'Espere um amigo entrar ou ligue os bots.']:[true,'']}
+  const cnt=[0,1].map(t=>R.filter(r=>r.team===t).length);
+  if(cnt[0]>ts||cnt[1]>ts)return[false,`Tem gente demais num time para ${ts}v${ts}. Toque no time de alguém para trocar.`];
+  if(!bots&&(cnt[0]<1||cnt[1]<1))return[false,'Cada time precisa de pelo menos 1 chef. Ligue os bots ou espere um amigo.'];
+  if(!bots&&cnt[0]!==cnt[1])return[true,'Os times estão desiguais. Ligue os bots para completar.'];
+  return[true,''];
+}
 function lobbyBroadcast(){
-  const names=net.roster.map(r=>r.name);
-  renderLobby(names,0,true,net.bots);
-  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'lobby',code:net.code,names,you:i,bots:net.bots}));
+  const names=net.roster.map(r=>r.name),teams=net.roster.map(r=>net.teamSize?r.team:-1);
+  renderLobby(names,teams,0,true,net.bots,net.teamSize);
+  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'lobby',code:net.code,names,teams,you:i,bots:net.bots,ts:net.teamSize}));
 }
 function hostMsg(conn,m){
   if(!net||net.role!=='host'||!m)return;
@@ -585,7 +629,8 @@ function hostMsg(conn,m){
     if(net.roster.some(r=>r.conn===conn))return;
     let name=cleanName(m.name);const used=net.roster.map(r=>r.name);let k=2;const base=name.slice(0,8);
     while(used.includes(name))name=base+' '+(k++);
-    net.roster.push({name,conn});beep(700,.08);lobbyBroadcast();return}
+    const c0=net.roster.filter(r=>r.team===0).length,c1=net.roster.length-c0;
+    net.roster.push({name,conn,team:c0<=c1?0:1});beep(700,.08);lobbyBroadcast();return}
   const c=chefs.find(c=>c.net===conn);if(!c)return;
   if(m.t==='in'){let x=+m.x||0,z=+m.z||0;const l=Math.hypot(x,z);if(l>1){x/=l;z/=l}c.netIn.x=x;c.netIn.z=z}
   else if(m.t==='dash')dash(c);
@@ -599,13 +644,25 @@ function hostDrop(conn){
 }
 function hostStart(){
   if(!net||net.role!=='host')return;
-  const slots=net.roster.map(r=>({name:r.name,human:true,conn:r.conn}));
-  if(net.bots!=='none')for(let i=slots.length;i<8;i++)slots.push({name:BOT_NAMES[i],human:false});
+  if(!teamCheck()[0])return;
+  const ts=net.teamSize,bots=net.bots!=='none';let slots;
+  const free=BOT_NAMES.filter(n=>!net.roster.some(r=>r.name===n));
+  if(ts){
+    slots=[];let b=0;
+    for(const t of [0,1]){
+      net.roster.filter(r=>r.team===t).forEach(r=>slots.push({name:r.name,human:true,conn:r.conn,team:t}));
+      if(bots)while(slots.filter(x=>x.team===t).length<ts)slots.push({name:free[b++%free.length],human:false,team:t});
+    }
+  }else{
+    slots=net.roster.map(r=>({name:r.name,human:true,conn:r.conn,team:-1}));
+    if(bots)for(let i=slots.length,b=0;i<8;i++)slots.push({name:free[b++%free.length],human:false,team:-1});
+  }
   if(slots.length<2)return;
-  net.started=true;net.ev=[];mode='host';D=DIFF[net.bots==='none'?'medium':net.bots];
-  setupOnline(slots,0);
-  const info=slots.map(s=>({n:s.name,h:s.human}));
-  net.roster.forEach((r,i)=>r.conn&&r.conn.send({t:'start',slots:info,you:i}));
+  net.started=true;net.ev=[];mode='host';teamSize=ts;winTeam=-1;D=DIFF[bots?net.bots:'medium'];
+  const myIdx=slots.findIndex(x=>x.human&&!x.conn);
+  setupOnline(slots,myIdx);
+  const info=slots.map(x=>({n:x.name,h:x.human,t:x.team}));
+  net.roster.forEach(r=>{if(r.conn)r.conn.send({t:'start',slots:info,you:slots.findIndex(x=>x.conn===r.conn),ts})});
   beep(700,.08);beginCountdown();
 }
 let snapT=0;
@@ -643,11 +700,11 @@ function clientMsg(m){
   if(m.t==='deny'){netFail(m.why);return}
   if(m.t==='lobby'){
     if(mode==='client'||$('lobby').classList.contains('hidden'))toLobby();
-    renderLobby(m.names,m.you,false,m.bots);show('lobby');return}
-  if(m.t==='start'){mode='client';net.cd=0;setupOnline(m.slots.map(s=>({name:s.n,human:s.h})),m.you);beginCountdown();return}
+    renderLobby(m.names,m.teams||m.names.map(()=>-1),m.you,false,m.bots,m.ts||0);show('lobby');return}
+  if(m.t==='start'){mode='client';net.cd=0;teamSize=m.ts||0;winTeam=-1;setupOnline(m.slots.map(s=>({name:s.n,human:s.h,team:s.t==null?-1:s.t})),m.you);beginCountdown();return}
   if(mode!=='client')return;
   if(m.t==='s')clientSnap(m);
-  else if(m.t==='end'){m.pl.forEach((p,i)=>{if(chefs[i])chefs[i].place=p});state='end';setGameUI(false);showEnd()}
+  else if(m.t==='end'){m.pl.forEach((p,i)=>{if(chefs[i])chefs[i].place=p});winTeam=m.w==null?-1:m.w;state='end';setGameUI(false);showEnd()}
 }
 function clientSnap(m){
   platR=m.r;const s=platR/R0;pan.scale.set(s,1,s);if(platR<R0-2)egg.visible=false;
@@ -676,24 +733,33 @@ function clientStep(dt){
 /* --- comum --- */
 function setupOnline(slots,myIdx){
   clearChefs();platR=R0;pan.scale.set(1,1,1);egg.visible=true;time=0;shrinkMsg=false;endTimer=-1;player=null;
-  const n=slots.length;
+  const n=slots.length,teams=slots.some(x=>x.team>=0);
   slots.forEach((s,i)=>{
-    const isP=i===myIdx,a=i/n*Math.PI*2+Math.PI/2,r=7;
+    const team=teams?s.team:-1;let a,r=7;
+    if(teams){const mates=slots.filter(x=>x.team===team),k=mates.indexOf(s);
+      a=(team===0?1:-1)*Math.PI/2+(k-(mates.length-1)/2)*.62;r=6.5}
+    else a=i/n*Math.PI*2+Math.PI/2;
+    const isP=i===myIdx,col=teams?TEAM_COL[team]:COLORS[i];
     const c={x:Math.cos(a)*r,z:Math.sin(a)*r,vx:0,vz:0,y:0,vy:0,face:0,falling:false,dead:false,place:0,
-      dashCd:.5,dashT:0,stun:0,isP,human:s.human,name:s.name,col:COLORS[i],net:s.conn||null,netIn:{x:0,z:0},
-      ai:{t:Math.random()*.5,target:null,err:0},m:makeChef(COLORS[i],SKINS[i],isP?'Você':(s.human?s.name:s.name),isP,i%3===0)};
+      dashCd:.5,dashT:0,stun:0,isP,human:!!s.human,name:s.name,col,team,net:s.conn||null,netIn:{x:0,z:0},
+      ai:{t:Math.random()*.5,target:null,err:0},m:makeChef(col,SKINS[i%8],isP?'Você':s.name,isP,i%3===0,team)};
     c.face=Math.atan2(-c.x,-c.z);c.tx=c.x;c.tz=c.z;c.ty=0;c.tf=c.face;
     chefs.push(c);if(isP)player=c;
   });
 }
-function renderLobby(names,you,isHost,bots){
+function renderLobby(names,teams,you,isHost,bots,ts){
   $('lobbyCode').textContent=net?net.code:'';
-  const nb=bots==='none'?0:Math.max(0,8-names.length);
-  $('lobbyList').innerHTML=names.map((n,i)=>`<li class="${i===you?'me':''}"><span class="dot" style="background:#${COLORS[i].toString(16).padStart(6,'0')}"></span>${esc(n)}${i===0?' 👑':''}${i===you?' (você)':''}</li>`).join('');
-  $('lobbySub').textContent=names.length<2?'Passe o código para seus amigos entrarem.':`${names.length} jogadores na sala`+(nb?` + ${nb} bots`:'');
+  const nb=bots==='none'?0:ts?Math.max(0,2*ts-names.length):Math.max(0,8-names.length);
+  $('lobbyList').innerHTML=names.map((n,i)=>{const t=teams[i];
+    const col=t>=0?TEAM_COL[t]:COLORS[i];
+    return `<li class="${i===you?'me':''}"><span class="dot" style="background:#${col.toString(16).padStart(6,'0')}"></span>${esc(n)}${i===0?' 👑':''}${i===you?' (você)':''}`+
+      (t>=0?`<span class="tag t${t}" data-i="${i}">${isHost?'⇄ ':''}${TEAM_NAMES[t]}</span>`:'')+'</li>'}).join('');
+  const modeTxt=ts?`Modo ${ts}v${ts} · `:'Todos contra todos · ';
+  $('lobbySub').textContent=names.length<2&&!ts?'Passe o código para seus amigos entrarem.':modeTxt+`${names.length} jogador${names.length>1?'es':''}`+(nb?` + ${nb} bots`:'');
   $('hostCtl').classList.toggle('hidden',!isHost);$('lobbyWait').classList.toggle('hidden',isHost);
-  if(isHost){$('botSel').value=bots;$('btnStartOnline').disabled=names.length+nb<2;
-    $('lobbyStatus').textContent=names.length+nb<2?'Espere um amigo entrar ou ligue os bots.':''}
+  if(isHost){$('botSel').value=bots;
+    document.querySelectorAll('#onMode button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ts));
+    const [ok,msg]=teamCheck();$('btnStartOnline').disabled=!ok;$('lobbyStatus').textContent=msg}
   else $('lobbyStatus').textContent='';
 }
 function invite(){
@@ -711,6 +777,12 @@ $('btnJoin').onclick=()=>{beep(700,.08);joinRoom()};
 $('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom()});
 $('btnLeave').onclick=toMenu;
 $('btnInvite').onclick=invite;
+document.querySelectorAll('#cpuMode button').forEach(b=>b.onclick=()=>{cpuTeam=+b.dataset.t;beep(650,.06);
+  document.querySelectorAll('#cpuMode button').forEach(x=>x.classList.toggle('on',x===b));
+  $('cpuModeSub').textContent=cpuTeam?`Seu time (Vermelho) contra o time Azul: ${cpuTeam} contra ${cpuTeam}`:'Você + 7 chefs, todos contra todos'});
+document.querySelectorAll('#onMode button').forEach(b=>b.onclick=()=>{if(!net||net.role!=='host')return;net.teamSize=+b.dataset.t;balanceTeams();beep(650,.06);lobbyBroadcast()});
+$('lobbyList').addEventListener('click',e=>{const t=e.target.closest('.tag[data-i]');if(!t||!net||net.role!=='host'||!net.teamSize)return;
+  const r=net.roster[+t.dataset.i];if(!r)return;r.team=1-r.team;beep(650,.06);lobbyBroadcast()});
 $('botSel').onchange=()=>{if(net&&net.role==='host'){net.bots=$('botSel').value;lobbyBroadcast()}};
 $('btnStartOnline').onclick=hostStart;
 $('btnNetOk').onclick=()=>show('menu');
