@@ -21,6 +21,7 @@ jobs:
           mkdir -p www
           curl -fsSL https://claude-jogo-2.vercel.app/jogo.html -o www/index.html
           grep -q "Chef Arena" www/index.html
+          grep -q "btnCreate" www/index.html && echo "modo online presente"
       - name: Preparar app
         run: |
           npm init -y
